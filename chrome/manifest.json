@@ -1,0 +1,29 @@
+{
+	"manifest_version": 3,
+	"name": "History Helper",
+	"version": "1.2.3",
+	"description": "A history viewer.",
+	"author": "J.C. Fields",
+	"homepage_url": "https://github.com/jcfieldsdev/history-helper",
+	"permissions": [
+		"history",
+		"storage"
+	],
+	"icons": {
+		"16": "icons/icon-neutral-16.png",
+		"32": "icons/icon-neutral-32.png",
+		"48": "icons/icon-neutral-48.png",
+		"64": "icons/icon-neutral-64.png"
+	},
+	"background": {
+		"service_worker": "service-worker.js"
+	},
+	"action": {
+		"default_icon": {
+			"16": "icons/icon-neutral-16.png",
+			"32": "icons/icon-neutral-32.png",
+			"48": "icons/icon-neutral-48.png",
+			"64": "icons/icon-neutral-64.png"
+		}
+	}
+}

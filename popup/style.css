@@ -1,0 +1,755 @@
+:root {
+	--light-fg: #000;
+	--light-bg: #efeff2;
+	--light-medium: #f9f9fb;
+	--light-light: #fff;
+	--light-button: #2662d8;
+	--light-line: #e0e0e0;
+	--light-delete-bg: #ff4646;
+	--light-check-img: url(../icons/check-light.svg);
+	--light-delete-img: url(../icons/close-dark.svg);
+	--light-select-img: url(../icons/select-dark.svg);
+	--light-clear-img: url(../icons/close-dark.svg);
+	--light-reset-img: url(../icons/reset-dark.svg);
+	--light-clock-img: url(../icons/clock-dark.svg);
+	--light-more-img: url(../icons/more-light.svg);
+	--light-close-img: url(../icons/close-light.svg);
+	--dark-fg: #fff;
+	--dark-bg: #1c1b21;
+	--dark-medium: #23222a;
+	--dark-light: #42414c;
+	--dark-button: #64dafb;
+	--dark-line: #0c0c0d;
+	--dark-delete-bg: #b42828;
+	--dark-check-img: url(../icons/check-dark.svg);
+	--dark-delete-img: url(../icons/close-light.svg);
+	--dark-select-img: url(../icons/select-light.svg);
+	--dark-clear-img: url(../icons/close-light.svg);
+	--dark-reset-img: url(../icons/reset-light.svg);
+	--dark-clock-img: url(../icons/clock-light.svg);
+	--dark-more-img: url(../icons/more-dark.svg);
+	--dark-close-img: url(../icons/close-dark.svg);
+}
+
+a {
+	background: none;
+	color: var(--light-button);
+	text-decoration: none;
+}
+
+a, button {
+	cursor: pointer;
+}
+
+a:hover, a:active {
+	text-decoration: underline;
+}
+
+a:hover, a:active, button:hover:not(:disabled), input[type="checkbox"]:hover {
+	filter: brightness(0.75);
+	transition: 0.25s filter;
+}
+
+body {
+	display: grid;
+	grid-template-rows: 25% min-content auto;
+	margin: auto;
+	white-space: nowrap;
+	width: 80%;
+}
+
+body, html {
+	font-size: 10pt;
+	height: 100%;
+}
+
+button {
+	background-color: var(--light-button);
+	color: var(--light-light);
+	font-weight: bold;
+	margin: 0;
+	padding: 0 1.25em;
+	text-align: center;
+}
+
+button, input, select {
+	border: 0;
+	border-radius: 0.25em;
+	font-family: inherit;
+	font-size: inherit;
+	line-height: inherit;
+}
+
+button span {
+	display: none;
+}
+
+button#submit[disabled] {
+	animation: 1s throb infinite;
+}
+
+button.add {
+	margin-left: 0.5em;
+}
+
+button.clear {
+	background-image: var(--light-clear-img);
+}
+
+button.clear, button.reset {
+	background-color: var(--light-light);
+	background-position: 50% 50%;
+	background-repeat: no-repeat;
+	background-size: 1em 1em;
+	border-radius: 0 50% 50% 0;
+	flex-shrink: 0;
+	height: 2.5em;
+	padding: 0;
+	width: 2.25em;
+}
+
+button.closeVisits, button.setDate, button.showVisits {
+	background-position: 50% 50%;
+	background-repeat: no-repeat;
+	border-radius: 50%;
+	height: 1.5em;
+	padding: 0;
+	vertical-align: middle;
+	width: 1.5em;
+}
+
+button.closeVisits, button.showVisits {
+	background-image: var(--light-close-img);
+	background-size: 0.75em 0.75em;
+}
+
+button.closeVisits.rotating {
+	animation: 0.25s rotateClockwise;
+}
+
+button.delete {
+	background-color: var(--light-delete-bg);
+	background-image: var(--light-delete-img);
+	background-position: 50% 50%;
+	background-repeat: no-repeat;
+	background-size: 1em 1em;
+	height: 2em;
+	opacity: 0;
+	padding: 0;
+	visibility: hidden;
+	width: 2em;
+}
+
+button.disabled, button[disabled], input[disabled], select[disabled] {
+	opacity: 0.25;
+}
+
+button.match {
+	margin: 0.125em;
+	padding: 0;
+	width: 3em;
+}
+
+button.reset {
+	background-image: var(--light-reset-img);
+}
+
+button.setDate {
+	background-color: var(--light-light);
+	background-image: var(--light-clock-img);
+	background-size: 1em 1em;
+	border: 1px solid var(--light-line);
+}
+
+button.showVisits {
+	transform: rotate(-45deg);
+}
+
+button.showVisits.rotating {
+	animation: 0.25s rotateCounterclockwise;
+}
+
+div#dateRanges {
+	background: var(--light-medium);
+	border-radius: 0.5em;
+	color: inherit;
+}
+
+div#dateOptions {
+	align-items: baseline;
+	display: flex;
+	gap: 0.5em;
+}
+
+div#generalOptions {
+	align-items: center;
+	display: flex;
+	gap: 2em;
+	justify-content: flex-end;
+	text-align: center;
+}
+
+div#options {
+	display: flex;
+	justify-content: space-between;
+	margin: 0 1em;
+	padding: 0 1em;
+}
+
+div#results {
+	margin: 1em;
+	overflow: auto;
+	padding: 1px 1em 1em;
+}
+
+div#search {
+	background: var(--light-medium);
+	border-radius: 1em;
+	box-shadow: 0 1px 4px var(--light-line);
+	color: inherit;
+	margin: 1em;
+	overflow: auto;
+	padding: 1em;
+}
+
+div.allVisits {
+	animation: 0.25s expand;
+	width: 30vw;
+}
+
+div.allVisits ul {
+	list-style: none;
+	margin: 0;
+	max-height: 10em;
+	overflow: auto;
+	padding: 0 5em 0 0;
+}
+
+div.buttons {
+	margin: 0 1em;
+}
+
+div.dateRange {
+	align-items: center;
+	display: flex;
+}
+
+div.dateRange span.label {
+	display: inline-block;
+	width: 6em;
+}
+
+div.lastVisited {
+	align-items: center;
+	display: flex;
+	gap: 0.5em;
+}
+
+div.message {
+	font-style: italic;
+	text-align: center;
+}
+
+div.optionGroup {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5em;
+	padding: 0.25em 1em;
+}
+
+div.predicate {
+	align-items: center;
+	display: flex;
+	flex-grow: 1;
+}
+
+div.predicate label {
+	font-size: 0.75rem;
+	margin: 0 0.5em;
+}
+
+div.result {
+	box-shadow: 0 1px 4px var(--light-line);
+	margin: 0.25em 0.25em 1em;
+	padding: 1em;
+	position: relative;
+}
+
+div.result:hover button.delete {
+	opacity: 1;
+	transition: 0.5s opacity;
+	visibility: visible;
+}
+
+div.result span.label {
+	font-style: italic;
+}
+
+div.result:last-child {
+	margin-bottom: 0.25em;
+}
+
+div.result:nth-child(even) {
+	background: var(--light-line);
+	color: inherit;
+}
+
+div.result.deleting {
+	animation: 0.25s delete;
+}
+
+div.row {
+	align-items: baseline;
+	animation: 0.25s fade;
+	display: flex;
+	overflow: hidden;
+	padding: 0.5em;
+}
+
+div.title {
+	font-weight: bold;
+}
+
+div.title, div.url {
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+div.visits {
+	display: flex;
+	justify-content: space-between;
+	overflow: hidden;
+}
+
+div.widgets {
+	line-height: 100%;
+	position: absolute;
+	right: 0;
+	top: 0;
+}
+
+html {
+	background: var(--light-bg);
+	color: var(--light-fg);
+	font-family: Helvetica, Arial, sans-serif;
+	line-height: 200%;
+	padding: 0;
+}
+
+input {
+	height: 2em;
+	margin: 0;
+}
+
+input, select {
+	background-color: var(--light-light);
+	color: inherit;
+	margin: 0 0.25em;
+	padding: 0.25em 1.25em;
+}
+
+input#numResults {
+	background: none;
+	color: inherit;
+	opacity: initial;
+	text-align: center;
+	width: 4em;
+}
+
+input.date, input.query {
+	border-radius: 0.25em 0 0 0.25em;
+	margin-right: 0;
+}
+
+input.date.flashing {
+	animation: 1s flash;
+}
+
+input[type="checkbox"] {
+	appearance: none;
+	background-color: var(--light-medium);
+	background-position: 50% 50%;
+	background-repeat: no-repeat;
+	background-size: 1.25em 1.25em;
+	border: 1px solid var(--light-line);
+	border-radius: 0.1em;
+	height: 1.5em;
+	padding: 0;
+	vertical-align: middle;
+	width: 1.5em;
+}
+
+input[type="checkbox"]:checked {
+	background-color: var(--light-button);
+	background-image: var(--light-check-img);
+	border-color: var(--light-button);
+}
+
+input[type="date"], input[type="number"], input[type="time"] {
+	width: 8em;
+}
+
+input[type="range"] {
+	appearance: none;
+	background: transparent;
+	color: #fff;
+	width: 10em;
+}
+
+input[type="range"]:focus {
+	outline: 0;
+}
+
+input[type="range"]::-moz-range-thumb {
+	background: var(--light-button);
+	border: 0;
+	border-radius: 50%;
+	color: initial;
+	height: 1.25em;
+	width: 1.25em;
+}
+
+input[type="range"]::-moz-range-track {
+	background: var(--light-light);
+	border: 1px solid var(--light-line);
+	border-radius: 0.25em;
+	height: 0.5em;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+	background: var(--light-light);
+	border: 1px solid var(--light-line);
+	border-radius: 0.25em;
+	height: 0.5em;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+	appearance: none;
+	background: var(--light-button);
+	border: 0;
+	border-radius: 50%;
+	color: initial;
+	height: 1.25em;
+	margin-top: -0.5em;
+	width: 1.25em;
+}
+
+input[type="text"] {
+	height: 2em;
+	width: 100%;
+}
+
+label {
+	font-weight: bold;
+	user-select: none;
+}
+
+option {
+	font-weight: normal;
+}
+
+select {
+	appearance: none;
+	background-image: var(--light-select-img);
+	background-position: 100% 50%;
+	background-repeat: no-repeat;
+	font-weight: bold;
+	padding-right: 3.25em;
+}
+
+select#dateRange, select.compare {
+	width: 18em;
+}
+
+select#sortBy, select.subject {
+	width: 12em;
+}
+
+select.string {
+	width: 14em;
+}
+
+@keyframes delete {
+	0% {
+		opacity: 1;
+	}
+
+	100% {
+		opacity: 0;
+		transform: scale(0.95);
+	}
+}
+
+@keyframes expand {
+	0% {
+		max-height: 0.5em;
+	}
+
+	100% {
+		max-height: 10em;
+	}
+}
+
+@keyframes fade {
+	0% {
+		opacity: 0;
+	}
+
+	100% {
+		opacity: 1;
+	}
+}
+
+@keyframes flash {
+	0% {
+		filter: brightness(1);
+	}
+
+	50% {
+		filter: brightness(1.5);
+	}
+
+	100% {
+		filter: brightness(1);
+	}
+}
+
+@keyframes rotateClockwise {
+	0% {
+		transform: rotate(-45deg);
+	}
+
+	100% {
+		transform: rotate(0);
+	}
+}
+
+@keyframes rotateCounterclockwise {
+	0% {
+		transform: rotate(0);
+	}
+
+	100% {
+		transform: rotate(-45deg);
+	}
+}
+
+@keyframes throb {
+	0% {
+		transform: scale(0.95);
+	}
+
+	50% {
+		transform: scale(1.05);
+	}
+
+	100% {
+		transform: scale(0.95);
+	}
+}
+
+@media (prefers-color-scheme: dark) {
+	a {
+		background: none;
+		color: var(--dark-button);
+	}
+
+	a:hover, a:active, button:hover:not(:disabled),
+	input[type="checkbox"]:hover {
+		filter: brightness(1.25);
+	}
+
+	button {
+		background-color: var(--dark-button);
+		color: var(--dark-light);
+	}
+
+	button.clear {
+		background-image: var(--dark-clear-img);
+	}
+
+	button.clear, button.reset {
+		background-color: var(--dark-light);
+	}
+
+	button.closeVisits, button.showVisits {
+		background-image: var(--dark-close-img);
+	}
+
+	button.delete {
+		background-color: var(--dark-delete-bg);
+		background-image: var(--dark-delete-img);
+	}
+
+	button.reset {
+		background-image: var(--dark-reset-img);
+	}
+
+	button.setDate {
+		background-color: var(--dark-light);
+		background-image: var(--dark-clock-img);
+		border-color: var(--dark-line);
+	}
+
+	div#dateRanges {
+		background: var(--dark-medium);
+		color: inherit;
+	}
+
+	div#search {
+		background: var(--dark-medium);
+		box-shadow: 0 1px 4px var(--dark-line);
+		color: inherit;
+	}
+
+	div.result {
+		box-shadow: 0 1px 4px var(--dark-line);
+	}
+
+	div.result:nth-child(even) {
+		background: var(--dark-line);
+		color: inherit;
+	}
+
+	html {
+		background: var(--dark-bg);
+		color: var(--dark-fg);
+	}
+
+	input, select {
+		background-color: var(--dark-light);
+		color: inherit;
+	}
+
+	input[type="checkbox"] {
+		background-color: var(--dark-medium);
+		border-color: var(--dark-light);
+	}
+
+	input[type="checkbox"]:checked {
+		background-color: var(--dark-button);
+		background-image: var(--dark-check-img);
+		border-color: var(--dark-button);
+	}
+
+	input[type="range"]::-moz-range-thumb {
+		background: var(--dark-button);
+		color: initial;
+	}
+
+	input[type="range"]::-moz-range-track {
+		background: var(--dark-light);
+		border-color: var(--dark-line);
+	}
+
+	input[type="range"]::-webkit-slider-runnable-track {
+		background: var(--dark-light);
+		border-color: var(--dark-line);
+	}
+
+	input[type="range"]::-webkit-slider-thumb {
+		background: var(--dark-button);
+		color: initial;
+	}
+
+	select {
+		background-image: var(--dark-select-img);
+	}
+}
+
+@media (max-width: 1440px) {
+	body {
+		width: 90%;
+	}
+
+	div.allVisits {
+		width: 40vw;
+	}
+
+	div.optionGroup {
+		flex-direction: column;
+	}
+}
+
+@media (max-width: 1152px) {
+	div#dateOptions, div#generalOptions {
+		justify-content: space-between;
+	}
+
+	div#options {
+		flex-direction: column;
+	}
+
+	div.allVisits {
+		width: 50vw;
+	}
+}
+
+@media (max-width: 1024px) {
+	body {
+		width: 95%;
+	}
+
+	div#search div.predicate {
+		align-items: flex-start;
+		display: flex;
+		flex-direction: column;
+	}
+
+	div#search div.predicate select {
+		margin-bottom: 0.5em;
+	}
+
+	div.allVisits {
+		width: 60vw;
+	}
+
+	div.row {
+		border-bottom: 1px solid var(--light-line);
+	}
+
+	@media (prefers-color-scheme: dark) {
+		div.row {
+			border-bottom-color: var(--dark-line);
+		}
+	}
+}
+
+@media (max-width: 864px) {
+	div.optionGroup {
+		flex-direction: column;
+	}
+}
+
+@media (max-width: 720px) {
+	div#dateOptions {
+		align-items: center;
+		flex-direction: column;
+	}
+
+	div#options div.predicate {
+		display: flex;
+		flex-direction: column;
+	}
+
+	div#options div.predicate input[type="date"] {
+		margin-bottom: 0.5em;
+	}
+
+	div.allVisits {
+		width: 70vw;
+	}
+}
+
+@media (max-height: 1080px) {
+	body {
+		grid-template-rows: 33% min-content auto;
+	}
+}
+
+@media (max-height: 600px) {
+	body {
+		grid-template-rows: 50% min-content auto;
+	}
+}

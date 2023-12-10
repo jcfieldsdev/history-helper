@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en"><head><title>History Helper</title>
+<meta charset="utf-8">
+<link href="mailto:jcfields@jcfields.dev" rel="author" title="J.C. Fields">
+<link href="style.css" media="screen" rel="stylesheet" type="text/css">
+<link href="../icons/icon-neutral.svg" rel="shortcut icon" type="image/svg+xml">
+<link href="../homeicon.svg" rel="apple-touch-icon-precomposed" type="image/svg+xml">
+<script src="history.js" type="text/javascript"></script></head>
+<body>
+	<div id="search"></div>
+	<div id="options">
+		<div id="dateOptions">
+			<div class="optionGroup">
+				<div><label>Date range:</label>
+					<select id="dateRange" class="option">
+						<option value="1">Last hour</option>
+						<option value="2">Last day</option>
+						<option value="3" selected="selected">Last week</option>
+						<option value="4">Last month</option>
+						<option value="5">Last year</option>
+						<option value="6">All time</option>
+						<option value="0">Specific range...</option>
+					</select>
+				</div>
+				<div><label>Sort by:</label>
+					<select id="sortBy" class="option">
+						<option value="0">Title</option>
+						<option value="1">URL</option>
+						<option value="2">Last visited</option>
+						<option value="3">Visit count</option>
+					</select>
+					<label><input type="checkbox" id="sortOrder" class="option"> Ascending</label>
+				</div>
+			</div>
+			<div id="dateRanges" class="optionGroup">
+				<div class="dateRange">
+					<label><span class="label">Start date:</span>
+					<input type="date" id="startDate" class="date option"></label>
+					<button type="button" value="startDate" title="Reset the start date field" class="reset"><span>Reset</span></button>
+				</div>
+				<div class="dateRange">
+					<label><span class="label">End date:</span>
+					<input type="date" id="endDate" class="date option"></label>
+					<button type="button" value="endDate" title="Reset the end date field" class="reset"><span>Reset</span></button>
+				</div>
+			</div>
+		</div>
+		<div id="generalOptions">
+			<div>
+				<div><label>Match:</label></div>
+				<div><button type="button" value="0" title="Match at least one condition" id="any" class="match option">ANY</button>
+				<button type="button" value="1" title="Match every condition" id="all" class="match option">ALL</button></div>
+			</div>
+			<div>
+				<div>Search <input type="text" disabled="disabled" id="numResults"> entries.</div>
+				<div><input type="range" min="1" max="5" id="maxResults" class="option"></div>
+			</div>
+			<div><button type="button" id="submit" class="option">Search</button></div>
+		</div>
+	</div>
+	<div id="results"></div>
+	<div id="noResults" class="message">
+		<p>No results were found matching the given criteria.</p>
+		<p>Try using less specific conditions or expanding the entries searched.</p>
+	</div>
+	<div id="noResultsWithDate" class="message">
+		<p>No results were found within the specified date range.</p>
+		<p>Try specifying a different range or expanding the entries searched.</p>
+	</div>
+	<template id="subject">
+		<div>
+			<select class="subject">
+				<option value="0">Title or URL</option>
+				<option value="1">Title</option>
+				<option value="2">URL</option>
+				<option value="3">Host</option>
+				<option value="4">Path</option>
+				<option value="5">Visit count</option>
+			</select>
+		</div>
+	</template>
+	<template id="predicate">
+		<div class="predicate"></div>
+	</template>
+	<template id="buttons">
+		<div class="buttons">
+			<button type="button" title="Remove this condition" class="remove">&minus;</button>
+			<button type="button" title="Add another condition" class="add">+</button>
+		</div>
+	</template>
+	<template id="string">
+		<div class="predicate">
+			<select class="condition string">
+				<option value="0">Contains</option>
+				<option value="1">Does not contain</option>
+				<option value="2">Starts with</option>
+				<option value="3">Does not start with</option>
+				<option value="4">Ends with</option>
+				<option value="5">Does not end with</option>
+			</select>
+			<input type="text" class="value query">
+			<button type="button" title="Clear the text field" class="clear"><span>Clear</span></button>
+			<div>
+				<label><input type="checkbox" class="matchCase"> Match case</label>
+				<label><input type="checkbox" class="matchWholeWord"> Match whole word</label>
+			</div>
+		</div>
+	</template>
+	<template id="number">
+		<div class="predicate">
+			<select class="condition compare">
+				<option value="0">Equal to</option>
+				<option value="1">Not equal to</option>
+				<option value="2">Less than or equal to</option>
+				<option value="3">Less than</option>
+				<option value="4">Greater than or equal to</option>
+				<option value="5">Greater than</option>
+			</select>
+			<input type="number" value="0" class="value number">
+		</div>
+	</template>
+	<template id="result">
+		<div class="result">
+			<div class="title"></div>
+			<div class="url"><a class="link"></a></div>
+			<div class="visits">
+				<div class="lastVisited">
+					<span class="label">Last visited:</span>
+					<button type="button" title="Set the date range to this day" class="setDate"><span>Set</span></button>
+					<span class="lastVisit dateTime"></span>
+					<button type="button" title="Show all previous visits to this page" class="showVisits"><span>Show</span></button>
+					<button type="button" title="Hide all previous visits to this page" class="closeVisits"><span>Close</span></button>
+				</div>
+				<div><span class="label">Visit count:</span> <span class="visitCount"></span></div>
+			</div>
+			<div class="allVisits"></div>
+			<div class="widgets"><button type="button" title="Remove this page from the browser history" class="delete"><span>Delete</span></button></div>
+		</div>
+	</template>
+	<template id="allVisits">
+		<div class="allVisits">
+			<div><span class="label">All visits:</span></div>
+			<ul></ul>
+		</div>
+	</template>
+	<template id="visit">
+		<li><button type="button" title="Set the date range to this day" class="setDate"><span>Set</span></button> <span class="dateTime"></span></li>
+	</template>
+</body></html>

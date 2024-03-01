@@ -58,6 +58,10 @@
 			<div><button type="button" id="submit" class="option">Search</button></div>
 		</div>
 	</div>
+	<div id="split">
+		<button type="button" id="collapse" class="layout" title="Collapse the layout"><span>Collapse</span></button>
+		<button type="button" id="expand" class="layout" title="Expand the layout"><span>Expand</span></button>
+	</div>
 	<div id="results"></div>
 	<div id="noResults" class="message">
 		<p>No results were found matching the given criteria.</p>
@@ -98,9 +102,11 @@
 				<option value="4">Ends with</option>
 				<option value="5">Does not end with</option>
 			</select>
-			<input type="text" class="value query">
-			<button type="button" title="Clear the text field" class="clear"><span>Clear</span></button>
-			<div>
+			<div class="text">
+				<input type="text" class="value query">
+				<button type="button" title="Clear the text field" class="clear"><span>Clear</span></button>
+			</div>
+			<div class="flags">
 				<label><input type="checkbox" class="matchCase"> Match case</label>
 				<label><input type="checkbox" class="matchWholeWord"> Match whole word</label>
 			</div>

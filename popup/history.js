@@ -109,6 +109,13 @@ const DATE_FORMAT = {
 // time zone offset in hours
 const TZ_OFFSET = new Date().getTimezoneOffset() / 60;
 
+// form layout
+const LAYOUT = {
+	FULL:      0,
+	COMPACT:   1,
+	COLLAPSED: 2
+};
+
 /*
  * initialization
  */
@@ -178,6 +185,14 @@ window.addEventListener("load", function() {
 			search.search().then(function(results) {
 				form.showResults(results, search);
 			});
+		}
+
+		if (element.matches("#collapse")) {
+			form.collapseLayout();
+		}
+
+		if (element.matches("#expand")) {
+			form.expandLayout();
 		}
 
 		if (element.matches(".clear")) {
@@ -354,6 +369,8 @@ Row.prototype.setFlag = function(key, value) {
  */
 
 function Form() {
+	this.layout = LAYOUT.FULL;
+
 	this.sortBy = DEFAULTS.SORT_BY;
 	this.sortOrder = DEFAULTS.SORT_ORDER;
 
@@ -362,8 +379,9 @@ function Form() {
 
 Form.prototype.load = function(options) {
 	if (options != undefined) {
-		const {sortBy, sortOrder} = options;
+		const {layout, sortBy, sortOrder} = options;
 
+		this.layout = layout;
 		this.sortBy = sortBy;
 		this.sortOrder = sortOrder;
 	}
@@ -371,6 +389,7 @@ Form.prototype.load = function(options) {
 
 Form.prototype.save = function() {
 	return {
+		layout:    this.layout,
 		sortBy:    this.sortBy,
 		sortOrder: this.sortOrder
 	};
@@ -617,6 +636,8 @@ Form.prototype.reloadOptions = function(search) {
 	$("#maxResults").value = search.maxResults;
 	$("#numResults").value = Math.pow(10, search.maxResults).toLocaleString();
 
+	this.setLayout(this.layout);
+
 	for (const element of $$(".date, .reset")) {
 		element.disabled = search.dateRange != DATE_RANGE.SPECIFIC_RANGE;
 	}
@@ -644,6 +665,11 @@ Form.prototype.setDate = function(search, visitTime) {
 
 	this.reloadOptions(search);
 
+	// expands to compact layout to show date field if collapsed
+	if (this.layout == LAYOUT.COLLAPSED) {
+		this.setLayout(LAYOUT.COMPACT);
+	}
+
 	restartAnimation($("#startDate"));
 	restartAnimation($("#endDate"));
 
@@ -660,6 +686,33 @@ Form.prototype.setDate = function(search, visitTime) {
 		element.addEventListener("animationend", function() {
 			this.classList.remove("flashing");
 		});
+	}
+};
+
+Form.prototype.setLayout = function(layout=false) {
+	const body = $("body");
+	body.classList.toggle("collapsed", layout == LAYOUT.COLLAPSED);
+	body.classList.toggle("compact", layout == LAYOUT.COMPACT);
+
+	$("#collapse").hidden = layout == LAYOUT.COLLAPSED;
+	$("#expand").hidden = layout == LAYOUT.FULL;
+
+	this.layout = layout;
+};
+
+Form.prototype.collapseLayout = function() {
+	if (this.layout == LAYOUT.FULL) {
+		this.setLayout(LAYOUT.COMPACT);
+	} else {
+		this.setLayout(LAYOUT.COLLAPSED);
+	}
+};
+
+Form.prototype.expandLayout = function() {
+	if (this.layout == LAYOUT.COLLAPSED) {
+		this.setLayout(LAYOUT.COMPACT);
+	} else {
+		this.setLayout(LAYOUT.FULL);
 	}
 };
 

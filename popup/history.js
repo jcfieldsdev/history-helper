@@ -89,15 +89,24 @@ const MATCH = {
 	ALL: 1
 };
 
+// form layout
+const LAYOUT = {
+	FULL:      0,
+	COMPACT:   1,
+	COLLAPSED: 2
+};
+
 // default values
 const DEFAULTS = {
 	SUBJECT:     SUBJECT.TITLE_OR_URL,
 	DATE_RANGE:  DATE_RANGE.LAST_WEEK,
 	SORT_BY:     SORT_BY.LAST_VISITED,
 	SORT_ORDER:  SORT_ORDER.DESCENDING,
+	PAGE_LENGTH: 2, // as power of 10
 	MATCH:       MATCH.ALL,
 	MIN_RESULTS: 1,
-	MAX_RESULTS: 4 // as power of 10
+	MAX_RESULTS: 4, // as power of 10
+	LAYOUT:      LAYOUT.FULL
 };
 
 // date/time locale string options
@@ -108,13 +117,6 @@ const DATE_FORMAT = {
 
 // time zone offset in hours
 const TZ_OFFSET = new Date().getTimezoneOffset() / 60;
-
-// form layout
-const LAYOUT = {
-	FULL:      0,
-	COMPACT:   1,
-	COLLAPSED: 2
-};
 
 /*
  * initialization
@@ -153,7 +155,7 @@ window.addEventListener("load", function() {
 		if (key == "Enter") {
 			form.loading();
 			search.search().then(function(results) {
-				form.showResults(results, search);
+				form.loadAllResults(results, search);
 			});
 		}
 	});
@@ -183,16 +185,8 @@ window.addEventListener("load", function() {
 		if (element.matches("#submit")) {
 			form.loading();
 			search.search().then(function(results) {
-				form.showResults(results, search);
+				form.loadAllResults(results, search);
 			});
-		}
-
-		if (element.matches("#collapse")) {
-			form.collapseLayout();
-		}
-
-		if (element.matches("#expand")) {
-			form.expandLayout();
 		}
 
 		if (element.matches(".clear")) {
@@ -203,6 +197,22 @@ window.addEventListener("load", function() {
 		if (element.matches(".reset")) {
 			search[element.value] = null;
 			form.reloadOptions(search);
+		}
+
+		if (element.matches("#collapse")) {
+			form.collapseLayout();
+		}
+
+		if (element.matches("#expand")) {
+			form.expandLayout();
+		}
+
+		if (element.matches("#previousPage")) {
+			form.loadPreviousPage();
+		}
+
+		if (element.matches("#nextPage")) {
+			form.loadNextPage();
 		}
 
 		if (element.matches(".setDate")) {
@@ -289,6 +299,16 @@ window.addEventListener("load", function() {
 			search.maxResults = Number(element.value);
 			form.reloadOptions(search);
 		}
+
+		if (element.matches("#currentPage")) {
+			form.loadPage(Number(element.value));
+		}
+
+		if (element.matches("#pageLength")) {
+			form.pageLength = Number(element.value);
+			form.reloadOptions(search);
+			form.loadPage(1);
+		}
 	});
 });
 
@@ -369,35 +389,43 @@ Row.prototype.setFlag = function(key, value) {
  */
 
 function Form() {
-	this.layout = LAYOUT.FULL;
-
+	this.layout = DEFAULTS.LAYOUT;
 	this.sortBy = DEFAULTS.SORT_BY;
 	this.sortOrder = DEFAULTS.SORT_ORDER;
+	this.pageLength = DEFAULTS.PAGE_LENGTH;
 
 	this.searching = false;
+	this.results = [];
+	this.currentPage = 1;
 }
 
 Form.prototype.load = function(options) {
 	if (options != undefined) {
-		const {layout, sortBy, sortOrder} = options;
+		const {layout, sortBy, sortOrder, pageLength} = options;
 
-		this.layout = layout;
-		this.sortBy = sortBy;
-		this.sortOrder = sortOrder;
+		this.layout     = layout     ?? DEFAULTS.LAYOUT;
+		this.sortBy     = sortBy     ?? DEFAULTS.SORT_BY;
+		this.sortOrder  = sortOrder  ?? DEFAULTS.SORT_ORDER;
+		this.pageLength = pageLength ?? DEFAULTS.PAGE_LENGTH;
 	}
 };
 
 Form.prototype.save = function() {
 	return {
-		layout:    this.layout,
-		sortBy:    this.sortBy,
-		sortOrder: this.sortOrder
+		layout:     this.layout,
+		sortBy:     this.sortBy,
+		sortOrder:  this.sortOrder,
+		pageLength: this.pageLength
 	};
 };
 
 Form.prototype.init = function() {
 	for (const element of $$(".message")) {
 		element.hidden = true;
+	}
+
+	for (const element of $$(".page")) {
+		element.disabled = true;
 	}
 
 	this.toggleOptions(false);
@@ -494,10 +522,7 @@ Form.prototype.loading = function() {
 	$("#submit").disabled = true;
 };
 
-Form.prototype.showResults = function(results, search) {
-	const resultsContainerElement = document.createElement("div");
-	resultsContainerElement.id = "results";
-
+Form.prototype.loadAllResults = function(results, search) {
 	switch (this.sortBy) { // initially sorted by visit time
 		case SORT_BY.TITLE:
 			results = results.sort(function(a, b) {
@@ -520,6 +545,68 @@ Form.prototype.showResults = function(results, search) {
 		results = results.reverse();
 	}
 
+	this.results = results;
+	this.loadPage(1);
+
+	const resultsFound = results.length > 0;
+	const dateRangeUsed = search.startDate != null || search.endDate != null;
+
+	$("#submit").disabled = false;
+	$("#noResults").hidden = resultsFound || dateRangeUsed;
+	$("#noResultsWithDate").hidden = resultsFound || !dateRangeUsed;
+
+	function sortByNumber(a, b) {
+		return b - a;
+	}
+
+	function sortByString(a, b) {
+		if (a == null) {
+			return 1;
+		}
+
+		if (b == null) {
+			return -1;
+		}
+
+		return b.localeCompare(a);
+	}
+};
+
+Form.prototype.loadPage = function(page=1) {
+	const pageLength = Math.pow(10, this.pageLength);
+	const totalPages = Math.ceil(this.results.length / pageLength);
+	this.showResultsPage(Math.max(Math.min(page, totalPages), 0));
+};
+
+Form.prototype.loadPreviousPage = function() {
+	const previousPage = this.currentPage - 1;
+
+	if (previousPage > 0) {
+		this.showResultsPage(previousPage);
+	}
+};
+
+Form.prototype.loadNextPage = function() {
+	const pageLength = Math.pow(10, this.pageLength);
+	const totalPages = Math.ceil(this.results.length / pageLength);
+	const nextPage = this.currentPage + 1;
+
+	if (nextPage <= totalPages) {
+		this.showResultsPage(nextPage);
+	}
+};
+
+Form.prototype.showResultsPage = function(page=1) {
+	const pageLength = Math.pow(10, this.pageLength);
+	const firstResult = pageLength * (page - 1);
+	const lastResult = firstResult + pageLength;
+	const results = this.results.slice(firstResult, lastResult);
+
+	this.currentPage = page;
+
+	const resultsContainerElement = document.createElement("div");
+	resultsContainerElement.id = "results";
+
 	for (const result of results) {
 		const {title, url, lastVisitTime, visitCount} = result;
 
@@ -541,29 +628,15 @@ Form.prototype.showResults = function(results, search) {
 	}
 
 	$("#results").replaceWith(resultsContainerElement);
-	$("#submit").disabled = false;
 
-	const resultsFound = results.length > 0;
-	const dateRangeUsed = search.startDate != null || search.endDate != null;
-
-	$("#noResults").hidden = resultsFound || dateRangeUsed;
-	$("#noResultsWithDate").hidden = resultsFound || !dateRangeUsed;
-
-	function sortByNumber(a, b) {
-		return b - a;
-	}
-
-	function sortByString(a, b) {
-		if (a == null) {
-			return 1;
-		}
-
-		if (b == null) {
-			return -1;
-		}
-
-		return b.localeCompare(a);
-	}
+	const totalPages = Math.ceil(this.results.length / pageLength);
+	$("#pagination").classList.toggle("hidden", totalPages == 1);
+	$("#currentPage").value = page;
+	$("#currentPage").max = totalPages;
+	$("#totalPages").textContent = totalPages.toLocaleString();
+	$("#totalResults").textContent = this.results.length.toLocaleString();
+	$("#previousPage").disabled = page == 1;
+	$("#nextPage").disabled = page == totalPages;
 };
 
 Form.prototype.showVisits = function(resultElement, url) {
@@ -575,7 +648,7 @@ Form.prototype.showVisits = function(resultElement, url) {
 	} else { // generates list for the first time
 		chrome.history.getVisits({url}).then(function(visits) {
 			const div = $("#allVisits").content.cloneNode(true);
-			const ul = document.createElement("ul");
+			const ol = document.createElement("ol");
 
 			for (const visit of visits) {
 				const {visitTime} = visit;
@@ -586,10 +659,10 @@ Form.prototype.showVisits = function(resultElement, url) {
 				const li = $("#visit").content.cloneNode(true);
 				li.querySelector(".dateTime").textContent = lastVisit;
 				li.querySelector(".setDate").value = visitTime;
-				ul.append(li);
+				ol.append(li);
 			}
 
-			div.querySelector("ul").replaceWith(ul);
+			div.querySelector("ol").replaceWith(ol);
 			allVisitsElement.replaceWith(div);
 		});
 	}
@@ -628,6 +701,7 @@ Form.prototype.deleteItem = function(resultElement, url) {
 Form.prototype.reloadOptions = function(search) {
 	$("#sortBy").value = this.sortBy;
 	$("#sortOrder").checked = this.sortOrder;
+	$("#pageLength").value = this.pageLength;
 
 	$("#dateRange").value = search.dateRange;
 	$("#startDate").value = search.startDate;
@@ -689,7 +763,7 @@ Form.prototype.setDate = function(search, visitTime) {
 	}
 };
 
-Form.prototype.setLayout = function(layout=false) {
+Form.prototype.setLayout = function(layout) {
 	const body = $("body");
 	body.classList.toggle("collapsed", layout == LAYOUT.COLLAPSED);
 	body.classList.toggle("compact", layout == LAYOUT.COMPACT);

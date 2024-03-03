@@ -62,6 +62,17 @@
 		<button type="button" id="collapse" class="layout" title="Collapse the layout"><span>Collapse</span></button>
 		<button type="button" id="expand" class="layout" title="Expand the layout"><span>Expand</span></button>
 	</div>
+	<div id="pagination">
+		<button type="button" id="previousPage" class="page" title="Load previous page of results"><span>Previous</span></button>
+		<div>Page <input type="number" min="1" value="1" id="currentPage"> of <span id="totalPages">1</span></div>
+		<div><span id="totalResults">0</span> results found.</div>
+		<div><select id="pageLength" class="option">
+			<option value="1">10</option>
+			<option value="2" selected="selected">100</option>
+			<option value="3">1,000</option>
+		</select> results per page.</div>
+		<button type="button" id="nextPage" class="page" title="Load next page of results"><span>Next</span></button>
+	</div>
 	<div id="results"></div>
 	<div id="noResults" class="message">
 		<p>No results were found matching the given criteria.</p>
@@ -146,7 +157,7 @@
 	<template id="allVisits">
 		<div class="allVisits">
 			<div><span class="label">All visits:</span></div>
-			<ul></ul>
+			<ol></ol>
 		</div>
 	</template>
 	<template id="visit">

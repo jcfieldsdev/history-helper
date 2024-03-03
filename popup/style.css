@@ -7,15 +7,17 @@
 	--light-line: #e0e0e0;
 	--light-delete-bg: #ff4646;
 	--light-check-img: url(../icons/check-light.svg);
-	--light-collapse-img: url(../icons/collapse-dark.svg);
-	--light-delete-img: url(../icons/close-dark.svg);
-	--light-expand-img: url(../icons/expand-dark.svg);
 	--light-select-img: url(../icons/select-dark.svg);
 	--light-clear-img: url(../icons/close-dark.svg);
 	--light-reset-img: url(../icons/reset-dark.svg);
 	--light-clock-img: url(../icons/clock-dark.svg);
+	--light-collapse-img: url(../icons/collapse-dark.svg);
+	--light-expand-img: url(../icons/expand-dark.svg);
+	--light-previous-img: url(../icons/previous-light.svg);
+	--light-next-img: url(../icons/next-light.svg);
 	--light-more-img: url(../icons/more-light.svg);
 	--light-close-img: url(../icons/close-light.svg);
+	--light-delete-img: url(../icons/close-dark.svg);
 	--dark-fg: #fff;
 	--dark-bg: #1c1b21;
 	--dark-medium: #23222a;
@@ -24,15 +26,17 @@
 	--dark-line: #0c0c0d;
 	--dark-delete-bg: #b42828;
 	--dark-check-img: url(../icons/check-dark.svg);
-	--dark-collapse-img: url(../icons/collapse-light.svg);
-	--dark-delete-img: url(../icons/close-light.svg);
-	--dark-expand-img: url(../icons/expand-light.svg);
 	--dark-select-img: url(../icons/select-light.svg);
 	--dark-clear-img: url(../icons/close-light.svg);
 	--dark-reset-img: url(../icons/reset-light.svg);
 	--dark-clock-img: url(../icons/clock-light.svg);
+	--dark-collapse-img: url(../icons/collapse-light.svg);
+	--dark-expand-img: url(../icons/expand-light.svg);
+	--dark-previous-img: url(../icons/previous-dark.svg);
+	--dark-next-img: url(../icons/next-dark.svg);
 	--dark-more-img: url(../icons/more-dark.svg);
 	--dark-close-img: url(../icons/close-dark.svg);
+	--dark-delete-img: url(../icons/close-light.svg);
 }
 
 a {
@@ -107,6 +111,14 @@ button#expand {
 	border-radius: 0 0.25em 0.25em 0;
 }
 
+button#nextPage {
+	background-image: var(--light-next-img);
+}
+
+button#previousPage {
+	background-image: var(--light-previous-img);
+}
+
 button#submit[disabled] {
 	animation: 1s throb infinite;
 }
@@ -117,13 +129,13 @@ button.add {
 
 button.clear {
 	background-image: var(--light-clear-img);
+	background-size: 0.75em;
 }
 
 button.clear, button.reset {
 	background-color: var(--light-light);
 	background-position: 50% 50%;
 	background-repeat: no-repeat;
-	background-size: 1em 1em;
 	border-radius: 0 50% 50% 0;
 	flex-shrink: 0;
 	height: 2.5em;
@@ -143,7 +155,7 @@ button.closeVisits, button.setDate, button.showVisits {
 
 button.closeVisits, button.showVisits {
 	background-image: var(--light-close-img);
-	background-size: 0.75em 0.75em;
+	background-size: 0.75em;
 }
 
 button.closeVisits.rotating {
@@ -155,7 +167,7 @@ button.delete {
 	background-image: var(--light-delete-img);
 	background-position: 50% 50%;
 	background-repeat: no-repeat;
-	background-size: 1em 1em;
+	background-size: 1em;
 	height: 2em;
 	opacity: 0;
 	padding: 0;
@@ -182,14 +194,25 @@ button.match {
 	width: 3em;
 }
 
+button.page {
+	background-position: 50% 50%;
+	background-repeat: no-repeat;
+	background-size: 1.25em;
+	border-radius: 50%;
+	height: 1em;
+	padding: 1.25em;
+	width: 1em;
+}
+
 button.reset {
 	background-image: var(--light-reset-img);
+	background-size: 1em;
 }
 
 button.setDate {
 	background-color: var(--light-light);
 	background-image: var(--light-clock-img);
-	background-size: 1em 1em;
+	background-size: 1em;
 	border: 1px solid var(--light-line);
 }
 
@@ -228,6 +251,15 @@ div#options {
 	padding: 0 1em;
 }
 
+div#pagination {
+	align-items: center;
+	display: flex;
+	font-size: 80%;
+	justify-content: center;
+	margin-top: 1em;
+	gap: 4em;
+}
+
 div#results {
 	margin: 1em;
 	overflow: auto;
@@ -257,8 +289,8 @@ div.allVisits {
 	width: 30vw;
 }
 
-div.allVisits ul {
-	list-style: none;
+div.allVisits ol {
+	list-style-position: inside;
 	margin: 0;
 	max-height: 10em;
 	overflow: auto;
@@ -395,6 +427,10 @@ input, select {
 	padding: 0.25em 1.25em;
 }
 
+input#currentPage {
+	width: 4em;
+}
+
 input#numResults {
 	background: none;
 	color: inherit;
@@ -417,7 +453,7 @@ input[type="checkbox"] {
 	background-color: var(--light-medium);
 	background-position: 50% 50%;
 	background-repeat: no-repeat;
-	background-size: 1.25em 1.25em;
+	background-size: 1.25em;
 	border: 1px solid var(--light-line);
 	border-radius: 0.1em;
 	height: 1.5em;
@@ -617,6 +653,22 @@ select.string {
 
 	button#expand {
 		background-image: var(--dark-expand-img);
+	}
+
+	button#nextPage {
+		background-image: var(--dark-next-img);
+	}
+
+	button#previousPage {
+		background-image: var(--dark-previous-img);
+	}
+
+	button#nextPage {
+		background-image: var(--dark-next-img);
+	}
+
+	button#previousPage {
+		background-image: var(--dark-previous-img);
 	}
 
 	button.clear {

@@ -68,7 +68,7 @@ Finally, the **Search** button starts the search. For performance reasons, the e
 
 ### Results
 
-The results are displayed after searching if any have been found.
+The results are displayed after searching if any have been found. Results are split into multiple pages if there are too many to show on a single page; the number of results to show on each page can be adjusted.
 
 The *Last visited* date may be outside of the selected search range if the page was visited within the search range and then visited again later. When a page has been visited more than once, a cross icon appears that shows all visits to the page when pressed. Clicking the clock icon next to a date sets the **Start date** and **End date** fields to that day.
 

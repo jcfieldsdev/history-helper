@@ -718,7 +718,7 @@ Form.prototype.reloadOptions = function(search) {
 
 	for (const element of $$(".match")) {
 		const value = Number(element.value);
-		element.classList.toggle("disabled", search.match != value);
+		element.classList.toggle("unselected", search.match != value);
 	}
 };
 

@@ -175,10 +175,6 @@ button.delete {
 	width: 2em;
 }
 
-button.disabled, button[disabled], input[disabled], select[disabled] {
-	opacity: 0.25;
-}
-
 button.layout {
 	background-color: var(--light-medium);
 	background-position: 50% 50%;
@@ -189,6 +185,7 @@ button.layout {
 }
 
 button.match {
+	border: 1px solid var(--light-button);
 	margin: 0.125em;
 	padding: 0;
 	width: 3em;
@@ -222,6 +219,15 @@ button.showVisits {
 
 button.showVisits.rotating {
 	animation: 0.25s rotateCounterclockwise;
+}
+
+button.unselected {
+	background: var(--light-light);
+	color: var(--light-button);
+}
+
+button[disabled], input[disabled], select[disabled] {
+	opacity: 0.25;
 }
 
 div#dateRanges {
@@ -692,6 +698,10 @@ select.string {
 		background-color: var(--dark-medium);
 	}
 
+	button.match {
+		border-color: var(--dark-button);
+	}
+
 	button.reset {
 		background-image: var(--dark-reset-img);
 	}
@@ -700,6 +710,11 @@ select.string {
 		background-color: var(--dark-light);
 		background-image: var(--dark-clock-img);
 		border-color: var(--dark-line);
+	}
+
+	button.unselected {
+		background: var(--dark-light);
+		color: var(--dark-button);
 	}
 
 	div#dateRanges {

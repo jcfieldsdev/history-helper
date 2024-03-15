@@ -190,6 +190,9 @@ window.addEventListener("load", function() {
 		}
 
 		if (element.matches(".clear")) {
+			const n = Number(element.closest(".row").dataset.row);
+			rowCollection.getRow(n).value = "";
+
 			element.previousElementSibling.value = "";
 			element.previousElementSibling.focus();
 		}

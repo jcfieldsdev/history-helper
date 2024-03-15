@@ -75,8 +75,16 @@ body.collapsed div#options, body.collapsed div#search {
 	display: none;
 }
 
+body.compact button#collapse {
+	border-radius: 0.25em 0 0 0.25em;
+}
+
+body.compact button#expand {
+	border-radius: 0 0.25em 0.25em 0;
+}
+
 body.compact div#search {
-	flex-basis: 4em;
+	flex-basis: 8em;
 	transition: 0.5s flex;
 }
 
@@ -103,20 +111,20 @@ button span {
 
 button#collapse {
 	background-image: var(--light-collapse-img);
-	border-radius: 0.25em 0 0 0.25em;
 }
 
 button#expand {
 	background-image: var(--light-expand-img);
-	border-radius: 0 0.25em 0.25em 0;
 }
 
 button#nextPage {
 	background-image: var(--light-next-img);
+	border-radius: 0.25em 50% 50% 0.25em;
 }
 
 button#previousPage {
 	background-image: var(--light-previous-img);
+	border-radius: 50% 0.25em 0.25em 50%;
 }
 
 button#submit[disabled] {
@@ -180,6 +188,7 @@ button.layout {
 	background-position: 50% 50%;
 	background-repeat: no-repeat;
 	background-size: 1em;
+	border-radius: 0.25em;
 	height: 1.25em;
 	width: 100%;
 }
@@ -195,7 +204,6 @@ button.page {
 	background-position: 50% 50%;
 	background-repeat: no-repeat;
 	background-size: 1.25em;
-	border-radius: 50%;
 	height: 1em;
 	padding: 1.25em;
 	width: 1em;

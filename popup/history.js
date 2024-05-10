@@ -601,8 +601,8 @@ Form.prototype.loadNextPage = function() {
 
 Form.prototype.showResultsPage = function(page=1) {
 	const pageLength = Math.pow(10, this.pageLength);
-	const firstResult = pageLength * (page - 1);
-	const lastResult = firstResult + pageLength;
+	const firstResult = Math.max(pageLength * (page - 1), 0);
+	const lastResult = Math.min(firstResult + pageLength, this.results.length);
 	const results = this.results.slice(firstResult, lastResult);
 
 	this.currentPage = page;
@@ -633,10 +633,14 @@ Form.prototype.showResultsPage = function(page=1) {
 	$("#results").replaceWith(resultsContainerElement);
 
 	const totalPages = Math.ceil(this.results.length / pageLength);
+	const firstResultAdjusted = Math.min(firstResult + 1, this.results.length);
+
 	$("#pagination").classList.toggle("hidden", totalPages == 1);
 	$("#currentPage").value = page;
 	$("#currentPage").max = totalPages;
 	$("#totalPages").textContent = totalPages.toLocaleString();
+	$("#firstResult").textContent = firstResultAdjusted.toLocaleString();
+	$("#lastResult").textContent = lastResult.toLocaleString();
 	$("#totalResults").textContent = this.results.length.toLocaleString();
 	$("#previousPage").disabled = page == 1;
 	$("#nextPage").disabled = page == totalPages;
@@ -874,17 +878,34 @@ Search.prototype.filter = function(results) {
 					row.flags
 				);
 			case SUBJECT.TITLE_OR_URL:
-				return this.checkString(
-					row.condition,
-					result.title,
-					row.value,
-					row.flags
-				) || this.checkString(
-					row.condition,
-					result.url,
-					row.value,
-					row.flags
-				);
+				switch (row.condition) { // De Morgan's law
+					case STRING.DOES_NOT_CONTAIN:
+					case STRING.DOES_NOT_START_WITH:
+					case STRING.DOES_NOT_END_WITH:
+						return this.checkString(
+							row.condition,
+							result.title,
+							row.value,
+							row.flags
+						) && this.checkString(
+							row.condition,
+							result.url,
+							row.value,
+							row.flags
+						);
+					default:
+						return this.checkString(
+							row.condition,
+							result.title,
+							row.value,
+							row.flags
+						) || this.checkString(
+							row.condition,
+							result.url,
+							row.value,
+							row.flags
+						);
+				}
 			case SUBJECT.HOST:
 				return this.checkString(
 					row.condition,

@@ -280,6 +280,11 @@ div#results {
 	padding: 1px 1em 1em;
 }
 
+div#resultsCount {
+	text-align: center;
+	min-width: 20em;
+}
+
 div#search {
 	background: var(--light-medium);
 	border-radius: 1em;
@@ -855,6 +860,10 @@ select.string {
 }
 
 @media (max-width: 864px) {
+	div#resultsCount {
+		min-width: unset;
+	}
+
 	div.optionGroup {
 		flex-direction: column;
 	}

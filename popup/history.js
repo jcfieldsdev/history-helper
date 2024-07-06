@@ -40,12 +40,16 @@ const PREDICATE = {
 
 // string conditions
 const STRING = {
+	EQUAL_TO:            8,
+	NOT_EQUAL_TO:        9,
 	CONTAINS:            0,
 	DOES_NOT_CONTAIN:    1,
 	STARTS_WITH:         2,
 	DOES_NOT_START_WITH: 3,
 	ENDS_WITH:           4,
-	DOES_NOT_END_WITH:   5
+	DOES_NOT_END_WITH:   5,
+	MATCHES:             6,
+	DOES_NOT_MATCH:      7
 };
 
 // number conditions
@@ -99,6 +103,7 @@ const LAYOUT = {
 // default values
 const DEFAULTS = {
 	SUBJECT:     SUBJECT.TITLE_OR_URL,
+	PREDICATE:   PREDICATE.STRING,
 	DATE_RANGE:  DATE_RANGE.LAST_WEEK,
 	SORT_BY:     SORT_BY.LAST_VISITED,
 	SORT_ORDER:  SORT_ORDER.DESCENDING,
@@ -127,7 +132,7 @@ window.addEventListener("load", function() {
 	const form = new Form();
 	const search = new Search(rowCollection);
 
-	rowCollection.addRow(0);
+	rowCollection.appendRow(new Row(0, DEFAULTS.SUBJECT, DEFAULTS.PREDICATE));
 	form.createRow(rowCollection.getRow(0));
 	form.focusRow(0);
 
@@ -164,9 +169,11 @@ window.addEventListener("load", function() {
 
 		if (element.matches(".add")) {
 			const n = Number(element.closest(".row").dataset.row);
-			const row = rowCollection.getRow(n);
-			form.createRow(row);
-			rowCollection.addRow(n);
+			const oldRow = rowCollection.getRow(n);
+			const newRow = new Row(n, oldRow.subject, oldRow.condition);
+
+			form.createRow(newRow);
+			rowCollection.insertRow(n, newRow);
 			form.focusRow(n + 1);
 		}
 
@@ -191,10 +198,11 @@ window.addEventListener("load", function() {
 
 		if (element.matches(".clear")) {
 			const n = Number(element.closest(".row").dataset.row);
-			rowCollection.getRow(n).value = "";
+			rowCollection.getRow(n).setValue("");
 
-			element.previousElementSibling.value = "";
-			element.previousElementSibling.focus();
+			const input = form.findRow(n);
+			input.value = "";
+			input.focus();
 		}
 
 		if (element.matches(".reset")) {
@@ -222,6 +230,16 @@ window.addEventListener("load", function() {
 			form.setDate(search, Number(element.value));
 		}
 
+		if (element.matches(".setHost")) {
+			const n = rowCollection.rows.length - 1;
+			const newRow = new Row(n, SUBJECT.HOST, STRING.EQUAL_TO);
+			newRow.setValue(new URL(element.value).hostname);
+
+			form.createRow(newRow);
+			rowCollection.appendRow(newRow);
+			form.flashElement(form.findRow(n + 1));
+		}
+
 		if (element.matches(".showVisits")) {
 			form.showVisits(element.closest(".result"), element.value);
 		}
@@ -247,13 +265,17 @@ window.addEventListener("load", function() {
 
 		if (element.matches(".condition")) {
 			const n = Number(element.closest(".row").dataset.row);
-			rowCollection.getRow(n).condition = Number(element.value);
+			const row = rowCollection.getRow(n);
+			row.setCondition(Number(element.value));
 			form.selectRow(n);
+			form.showError(n, row);
 		}
 
 		if (element.matches(".query")) {
 			const n = Number(element.closest(".row").dataset.row);
-			rowCollection.getRow(n).value = element.value;
+			const row = rowCollection.getRow(n);
+			row.setValue(element.value);
+			form.showError(n, row);
 		}
 
 		if (element.matches(".matchCase")) {
@@ -277,7 +299,7 @@ window.addEventListener("load", function() {
 
 		if (element.matches(".number")) {
 			const n = Number(element.closest(".row").dataset.row);
-			rowCollection.getRow(n).value = Number(element.value);
+			rowCollection.getRow(n).setValue(Number(element.value));
 		}
 
 		if (element.matches("#sortBy")) {
@@ -335,12 +357,13 @@ RowCollection.prototype.getRow = function(n=0) {
 	return this.rows[n];
 };
 
-RowCollection.prototype.addRow = function(n=0) {
-	const subject = this.rows.length > 0
-	              ? this.rows[n].subject
-	              : DEFAULTS.SUBJECT;
-	const row = new Row(n, subject);
+RowCollection.prototype.insertRow = function(n, row) {
 	this.rows.splice(n + 1, 0, row);
+	this.renumberRows();
+};
+
+RowCollection.prototype.appendRow = function(row) {
+	this.rows.push(row);
 	this.renumberRows();
 };
 
@@ -359,12 +382,18 @@ RowCollection.prototype.renumberRows = function() {
  * Row prototype
  */
 
-function Row(n, subject) {
+function Row(n, subject, condition) {
 	this.n = n;
 
-	this.condition = 0;
-	this.value = 0;
+	this.subject = DEFAULTS.SUBJECT;
+	this.predicate = DEFAULTS.PREDICATE;
+
+	this.condition = condition || 0;
+	this.value = "";
 	this.flags = new Map();
+
+	this.regExp = null;
+	this.error = "";
 
 	this.setSubject(subject);
 }
@@ -376,15 +405,45 @@ Row.prototype.setSubject = function(subject) {
 
 	// resets value to default if type changes
 	if (this.predicate != predicate) {
-		this.value = 0;
+		this.value = predicate == PREDICATE.NUMBER ? 0 : "";
 	}
 
 	this.subject = subject;
 	this.predicate = predicate;
 };
 
+Row.prototype.setCondition = function(condition) {
+	this.condition = condition;
+	this.testValue();
+};
+
+Row.prototype.setValue = function(value) {
+	this.value = value;
+	this.testValue();
+};
+
 Row.prototype.setFlag = function(key, value) {
 	this.flags.set(key, value);
+};
+
+Row.prototype.testValue = function() {
+	const isRegExp = this.predicate == PREDICATE.STRING
+		&& (this.condition == STRING.MATCHES
+		 || this.condition == STRING.DOES_NOT_MATCH);
+
+	if (isRegExp) {
+		try { // tests regular expression for syntax errors
+			this.regExp = new RegExp(this.value);
+			this.error = "";
+		} catch (err) {
+			this.regExp = null;
+			this.error = err.message;
+			this.value = ""; // skips row in search if error
+		}
+	} else {
+		this.regExp = null;
+		this.error = "";
+	}
 };
 
 /*
@@ -479,20 +538,22 @@ Form.prototype.renumberRows = function() {
 
 Form.prototype.createPredicate = function(rowElement, row) {
 	let element = null;
-	let predicate = PREDICATE.STRING;
 
-	if (row.subject == SUBJECT.VISIT_COUNT) {
-		element = $("#number").content.cloneNode(true);
-		predicate = PREDICATE.NUMBER;
-	} else {
+	if (row.predicate == PREDICATE.STRING) {
 		element = $("#string").content.cloneNode(true);
-		predicate = PREDICATE.STRING;
+		element.querySelector(".value").value = row.value;
+		element.querySelector(".error").hidden = true;
+	} else {
+		element = $("#number").content.cloneNode(true);
+		element.querySelector(".value").value = Number(row.value);
 	}
+
+	element.querySelector(".condition").value = row.condition;
 
 	// does not replace if existing node is the same,
 	// avoids clearing user input unnecessarily
-	if (rowElement.dataset.predicate != predicate) {
-		rowElement.dataset.predicate = predicate;
+	if (rowElement.dataset.predicate != row.predicate) {
+		rowElement.dataset.predicate = row.predicate;
 		rowElement.querySelector(".predicate").replaceWith(element);
 	}
 };
@@ -500,6 +561,15 @@ Form.prototype.createPredicate = function(rowElement, row) {
 Form.prototype.changePredicate = function(row) {
 	const elements = $$(".row");
 	this.createPredicate(elements[row.n], row);
+};
+
+Form.prototype.showError = function(n, row) {
+	const rowElement = $$(".row").find(function(element) {
+		return Number(element.dataset.row) == n;
+	});
+	const errorButton = rowElement.querySelector(".error");
+	errorButton.hidden = row.regExp != null || row.error == "";
+	errorButton.title = "Error: " + row.error;
 };
 
 Form.prototype.findRow = function(n=0) {
@@ -610,6 +680,8 @@ Form.prototype.showResultsPage = function(page=1) {
 	const resultsContainerElement = document.createElement("div");
 	resultsContainerElement.id = "results";
 
+	const NO_TITLE = "(no title)";
+
 	for (const result of results) {
 		const {title, url, lastVisitTime, visitCount} = result;
 
@@ -617,9 +689,13 @@ Form.prototype.showResultsPage = function(page=1) {
 		const lastVisit = dateTime.toLocaleString([], DATE_FORMAT);
 
 		const resultElement = $("#result").content.cloneNode(true);
-		resultElement.querySelector(".title").textContent = title;
+		resultElement.querySelector(".title").textContent = title || NO_TITLE;
+		resultElement.querySelector(".title").title = title || NO_TITLE;
+		resultElement.querySelector(".title").classList.toggle("note", !title);
 		resultElement.querySelector(".link").href = url;
 		resultElement.querySelector(".link").textContent = url;
+		resultElement.querySelector(".link").title = url;
+		resultElement.querySelector(".setHost").value = url;
 		resultElement.querySelector(".lastVisit").textContent = lastVisit;
 		resultElement.querySelector(".visitCount").textContent = visitCount;
 		resultElement.querySelector(".setDate").value = lastVisitTime;
@@ -751,8 +827,8 @@ Form.prototype.setDate = function(search, visitTime) {
 		this.setLayout(LAYOUT.COMPACT);
 	}
 
-	restartAnimation($("#startDate"));
-	restartAnimation($("#endDate"));
+	this.flashElement($("#startDate"));
+	this.flashElement($("#endDate"));
 
 	function formatDate(dateTime) {
 		return dateTime.toISOString().slice(0, 10);
@@ -761,13 +837,13 @@ Form.prototype.setDate = function(search, visitTime) {
 	function convertFromUTC(dateTime) {
 		return new Date(dateTime.setHours(dateTime.getHours() - TZ_OFFSET));
 	}
+};
 
-	function restartAnimation(element) {
-		element.classList.add("flashing");
-		element.addEventListener("animationend", function() {
-			this.classList.remove("flashing");
-		});
-	}
+Form.prototype.flashElement = function(element) {
+	element.classList.add("flashing");
+	element.addEventListener("animationend", function() {
+		this.classList.remove("flashing");
+	});
 };
 
 Form.prototype.setLayout = function(layout) {
@@ -815,11 +891,11 @@ Search.prototype.load = function(options) {
 	if (options != undefined) {
 		const {dateRange, startDate, endDate, match, maxResults} = options;
 
-		this.dateRange = dateRange;
-		this.startDate = startDate;
-		this.endDate = endDate;
-		this.match = match;
-		this.maxResults = maxResults;
+		this.dateRange  = dateRange  ?? DEFAULTS.DATE_RANGE;
+		this.startDate  = startDate  ?? null;
+		this.endDate    = endDate    ?? null;
+		this.match      = match      ?? DEFAULTS.MATCH;
+		this.maxResults = maxResults ?? DEFAULTS.MAX_RESULTS;
 	}
 };
 
@@ -863,22 +939,9 @@ Search.prototype.filter = function(results) {
 
 	function checkRow(row, result) {
 		switch (row.subject) {
-			case SUBJECT.TITLE:
-				return this.checkString(
-					row.condition,
-					result.title,
-					row.value,
-					row.flags
-				);
-			case SUBJECT.URL:
-				return this.checkString(
-					row.condition,
-					result.url,
-					row.value,
-					row.flags
-				);
 			case SUBJECT.TITLE_OR_URL:
 				switch (row.condition) { // De Morgan's law
+					case STRING.NOT_EQUAL_TO:
 					case STRING.DOES_NOT_CONTAIN:
 					case STRING.DOES_NOT_START_WITH:
 					case STRING.DOES_NOT_END_WITH:
@@ -906,6 +969,20 @@ Search.prototype.filter = function(results) {
 							row.flags
 						);
 				}
+			case SUBJECT.TITLE:
+				return this.checkString(
+					row.condition,
+					result.title,
+					row.value,
+					row.flags
+				);
+			case SUBJECT.URL:
+				return this.checkString(
+					row.condition,
+					result.url,
+					row.value,
+					row.flags
+				);
 			case SUBJECT.HOST:
 				return this.checkString(
 					row.condition,
@@ -941,6 +1018,18 @@ Search.prototype.checkString = function(condition, compare, value, flags) {
 		value = value.toString().toLowerCase();
 	}
 
+	// these conditions ignore the "match whole word" setting
+	switch (condition) {
+		case STRING.EQUAL_TO:
+			return compare == value;
+		case STRING.NOT_EQUAL_TO:
+			return compare != value;
+		case STRING.MATCHES:
+			return new RegExp(value).test(compare);
+		case STRING.DOES_NOT_MATCH:
+			return !new RegExp(value).test(compare);
+	}
+
 	if (!matchWholeWord) {
 		switch (condition) {
 			case STRING.CONTAINS:
@@ -956,21 +1045,21 @@ Search.prototype.checkString = function(condition, compare, value, flags) {
 			case STRING.DOES_NOT_END_WITH:
 				return !compare.endsWith(value);
 		}
-	} else {
-		switch (condition) {
-			case STRING.CONTAINS:
-				return new RegExp(`\\b${value}\\b`).test(compare);
-			case STRING.DOES_NOT_CONTAIN:
-				return !new RegExp(`\\b${value}\\b`).test(compare);
-			case STRING.STARTS_WITH:
-				return new RegExp(`^${value}\\b`).test(compare);
-			case STRING.DOES_NOT_START_WITH:
-				return !new RegExp(`^${value}\\b`).test(compare);
-			case STRING.ENDS_WITH:
-				return new RegExp(`\\b${value}$`).test(compare);
-			case STRING.DOES_NOT_END_WITH:
-				return !new RegExp(`\\b${value}$`).test(compare);
-		}
+	}
+
+	switch (condition) {
+		case STRING.CONTAINS:
+			return new RegExp(`\\b${value}\\b`).test(compare);
+		case STRING.DOES_NOT_CONTAIN:
+			return !new RegExp(`\\b${value}\\b`).test(compare);
+		case STRING.STARTS_WITH:
+			return new RegExp(`^${value}\\b`).test(compare);
+		case STRING.DOES_NOT_START_WITH:
+			return !new RegExp(`^${value}\\b`).test(compare);
+		case STRING.ENDS_WITH:
+			return new RegExp(`\\b${value}$`).test(compare);
+		case STRING.DOES_NOT_END_WITH:
+			return !new RegExp(`\\b${value}$`).test(compare);
 	}
 };
 
@@ -995,9 +1084,9 @@ Search.prototype.getText = function() {
 	// joins all search strings together
 	return this.rowCollection.rows.filter(function(row) {
 		return row.predicate == PREDICATE.STRING
-		    && (row.condition == STRING.CONTAINS
-		     || row.condition == STRING.STARTS_WITH
-		     || row.condition == STRING.ENDS_WITH);
+			&& (row.condition == STRING.CONTAINS
+			 || row.condition == STRING.STARTS_WITH
+			 || row.condition == STRING.ENDS_WITH);
 	}).map(function(row) {
 		return row.value == 0 ? "" : row.value;
 	}).join(" ");

@@ -106,15 +106,20 @@
 	<template id="string">
 		<div class="predicate">
 			<select class="condition string">
-				<option value="0">Contains</option>
+				<option value="8">Is</option>
+				<option value="9">Is not</option>
+				<option value="0" selected="selected">Contains</option>
 				<option value="1">Does not contain</option>
 				<option value="2">Starts with</option>
 				<option value="3">Does not start with</option>
 				<option value="4">Ends with</option>
 				<option value="5">Does not end with</option>
+				<option value="6">Matches</option>
+				<option value="7">Does not match</option>
 			</select>
 			<div class="text">
 				<input type="text" class="value query">
+				<button type="button" title="Error in text field" class="error"><span>Error</span></button>
 				<button type="button" title="Clear the text field" class="clear"><span>Clear</span></button>
 			</div>
 			<div class="flags">
@@ -139,7 +144,10 @@
 	<template id="result">
 		<div class="result">
 			<div class="title"></div>
-			<div class="url"><a class="link"></a></div>
+			<div class="url">
+				<button type="button" title="Add a search condition for this host" class="setHost"><span>Set</span></button>
+				<a class="link"></a>
+			</div>
 			<div class="visits">
 				<div class="lastVisited">
 					<span class="label">Last visited:</span>

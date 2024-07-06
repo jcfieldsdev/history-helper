@@ -18,14 +18,20 @@ The top part of the interface shows the search fields. You can add new rows by c
 
 *Title or URL*, *Title*, *URL*, *Host*, and *Path* search the history for text using the following comparison operations:
 
+- Is
+- Is not
 - Contains
 - Does not contain
 - Starts with
 - Does not start with
 - Ends with
 - Does not end with
+- Match
+- Does not match
 
-The *Match case* option does case-sensitive string comparisons. The *Match whole word* option only finds results where the search string is bordered by word boundary characters (such as spaces or hyphens) and not all substring matches. Each text field has a button to clear it.
+*Match* and *Does not match* are used for regular expressions. If there is a syntax error in the regular expression, an error icon appears at the end of the text field. Hovering the mouse cursor over this icon shows the error message. Rows containing errors are skipped when searching.
+
+The *Match case* option does case-sensitive string comparisons. The *Match whole word* option only finds results where the search string is bordered by word boundary characters (such as spaces or hyphens) and not all substring matches. This option does not apply to the *Match*, *Does not match*, *Is*, or *Is not* operations. Each text field has a button to clear it.
 
 *Visit count* filters the history by a numeric value using the following comparison operations:
 
@@ -69,6 +75,8 @@ Finally, the **Search** button starts the search. For performance reasons, the e
 ### Results
 
 The results are displayed after searching if any have been found. Results are split into multiple pages if there are too many to show on a single page; the number of results to show on each page can be adjusted.
+
+The title and URL may be truncated if they are too long to fit in the width of the display. Hovering over the title or URL with the cursor shows a tooltip containing the entire title or URL. Clicking the arrow icon next to a URL adds a search row that restricts searches to that host.
 
 The *Last visited* date may be outside of the selected search range if the page was visited within the search range and then visited again later. When a page has been visited more than once, a cross icon appears that shows all visits to the page when pressed. Clicking the clock icon next to a date sets the **Start date** and **End date** fields to that day.
 

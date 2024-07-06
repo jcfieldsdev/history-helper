@@ -9,7 +9,9 @@
 	--light-check-img: url(../icons/check-light.svg);
 	--light-select-img: url(../icons/select-dark.svg);
 	--light-clear-img: url(../icons/close-dark.svg);
+	--light-error-img: url(../icons/error-light.svg);
 	--light-reset-img: url(../icons/reset-dark.svg);
+	--light-host-img: url(../icons/host-dark.svg);
 	--light-clock-img: url(../icons/clock-dark.svg);
 	--light-collapse-img: url(../icons/collapse-dark.svg);
 	--light-expand-img: url(../icons/expand-dark.svg);
@@ -28,7 +30,9 @@
 	--dark-check-img: url(../icons/check-dark.svg);
 	--dark-select-img: url(../icons/select-light.svg);
 	--dark-clear-img: url(../icons/close-light.svg);
+	--dark-error-img: url(../icons/error-dark.svg);
 	--dark-reset-img: url(../icons/reset-light.svg);
+	--dark-host-img: url(../icons/host-light.svg);
 	--dark-clock-img: url(../icons/clock-light.svg);
 	--dark-collapse-img: url(../icons/collapse-light.svg);
 	--dark-expand-img: url(../icons/expand-light.svg);
@@ -140,18 +144,21 @@ button.clear {
 	background-size: 0.75em;
 }
 
-button.clear, button.reset {
+button.clear, button.error, button.reset {
 	background-color: var(--light-light);
 	background-position: 50% 50%;
 	background-repeat: no-repeat;
-	border-radius: 0 50% 50% 0;
 	flex-shrink: 0;
 	height: 2.5em;
 	padding: 0;
 	width: 2.25em;
 }
 
-button.closeVisits, button.setDate, button.showVisits {
+button.clear, button.reset {
+	border-radius: 0 50% 50% 0;
+}
+
+button.closeVisits, button.setDate, button.setHost, button.showVisits {
 	background-position: 50% 50%;
 	background-repeat: no-repeat;
 	border-radius: 50%;
@@ -181,6 +188,13 @@ button.delete {
 	padding: 0;
 	visibility: hidden;
 	width: 2em;
+}
+
+button.error {
+	background-image: var(--light-error-img);
+	background-size: 1.25em;
+	border-radius: 0;
+	cursor: help;
 }
 
 button.layout {
@@ -215,10 +229,17 @@ button.reset {
 }
 
 button.setDate {
-	background-color: var(--light-light);
 	background-image: var(--light-clock-img);
-	background-size: 1em;
+}
+
+button.setDate, button.setHost {
+	background-color: var(--light-light);
+	background-size: 0.75em;
 	border: 1px solid var(--light-line);
+}
+
+button.setHost {
+	background-image: var(--light-host-img);
 }
 
 button.showVisits {
@@ -413,6 +434,11 @@ div.title, div.url {
 	text-overflow: ellipsis;
 }
 
+div.title.note {
+	font-style: italic;
+	opacity: 50%;
+}
+
 div.visits {
 	display: flex;
 	justify-content: space-between;
@@ -463,7 +489,7 @@ input.date, input.query {
 	margin-right: 0;
 }
 
-input.date.flashing {
+input.flashing {
 	animation: 1s flash;
 }
 
@@ -694,7 +720,7 @@ select.string {
 		background-image: var(--dark-clear-img);
 	}
 
-	button.clear, button.reset {
+	button.clear, button.error, button.reset {
 		background-color: var(--dark-light);
 	}
 
@@ -720,9 +746,16 @@ select.string {
 	}
 
 	button.setDate {
-		background-color: var(--dark-light);
 		background-image: var(--dark-clock-img);
+	}
+
+	button.setDate, button.setHost {
+		background-color: var(--dark-light);
 		border-color: var(--dark-line);
+	}
+
+	button.setHost {
+		background-image: var(--dark-host-img);
 	}
 
 	button.unselected {

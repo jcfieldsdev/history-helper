@@ -20,6 +20,10 @@
 	--light-more-img: url(../icons/more-light.svg);
 	--light-close-img: url(../icons/close-light.svg);
 	--light-delete-img: url(../icons/close-dark.svg);
+	--light-ascending-on-img: url(../icons/ascending-on-light.svg);
+	--light-ascending-off-img: url(../icons/ascending-off-lightButton.svg);
+	--light-descending-on-img: url(../icons/descending-on-light.svg);
+	--light-descending-off-img: url(../icons/descending-off-lightButton.svg);
 	--dark-fg: #fff;
 	--dark-bg: #1c1b21;
 	--dark-medium: #23222a;
@@ -41,6 +45,10 @@
 	--dark-more-img: url(../icons/more-dark.svg);
 	--dark-close-img: url(../icons/close-dark.svg);
 	--dark-delete-img: url(../icons/close-light.svg);
+	--dark-ascending-on-img: url(../icons/ascending-on-dark.svg);
+	--dark-ascending-off-img: url(../icons/ascending-off-darkButton.svg);
+	--dark-descending-on-img: url(../icons/descending-on-dark.svg);
+	--dark-descending-off-img: url(../icons/descending-off-darkButton.svg);
 }
 
 a {
@@ -57,7 +65,8 @@ a:hover, a:active {
 	text-decoration: underline;
 }
 
-a:hover, a:active, button:hover:not(:disabled), input[type="checkbox"]:hover {
+a:hover, a:active, button:hover:not(:disabled),
+input[type="checkbox"]:hover {
 	filter: brightness(0.75);
 	transition: 0.25s filter;
 }
@@ -89,7 +98,14 @@ body.compact button#expand {
 
 body.compact div#search {
 	flex-basis: 8em;
-	transition: 0.5s flex;
+}
+
+body.expanded div#results {
+	display: none;
+}
+
+body.expanded div#search {
+	flex-grow: 1;
 }
 
 button {
@@ -97,7 +113,7 @@ button {
 	color: var(--light-light);
 	font-weight: bold;
 	margin: 0;
-	padding: 0 1.25em;
+	padding: 0.25em 1.5em;
 	text-align: center;
 }
 
@@ -131,6 +147,35 @@ button#previousPage {
 	border-radius: 50% 0.25em 0.25em 50%;
 }
 
+button#showDeleteAll, button.delete {
+	background-color: var(--light-delete-bg);
+	background-image: var(--light-delete-img);
+	background-position: 50% 50%;
+	background-repeat: no-repeat;
+	background-size: 1em;
+	height: 2em;
+	opacity: 0;
+	padding: 0;
+	visibility: hidden;
+	width: 2em;
+}
+
+button#sortAscending {
+	background-image: var(--light-ascending-on-img);
+}
+
+button#sortAscending.unselected {
+	background-image: var(--light-ascending-off-img);
+}
+
+button#sortDescending {
+	background-image: var(--light-descending-on-img);
+}
+
+button#sortDescending.unselected {
+	background-image: var(--light-descending-off-img);
+}
+
 button#submit[disabled] {
 	animation: 1s throb infinite;
 }
@@ -158,6 +203,11 @@ button.clear, button.reset {
 	border-radius: 0 50% 50% 0;
 }
 
+button.close {
+	background-color: var(--light-bg);
+	color: var(--light-fg);
+}
+
 button.closeVisits, button.setDate, button.setHost, button.showVisits {
 	background-position: 50% 50%;
 	background-repeat: no-repeat;
@@ -175,19 +225,6 @@ button.closeVisits, button.showVisits {
 
 button.closeVisits.rotating {
 	animation: 0.25s rotateClockwise;
-}
-
-button.delete {
-	background-color: var(--light-delete-bg);
-	background-image: var(--light-delete-img);
-	background-position: 50% 50%;
-	background-repeat: no-repeat;
-	background-size: 1em;
-	height: 2em;
-	opacity: 0;
-	padding: 0;
-	visibility: hidden;
-	width: 2em;
 }
 
 button.error {
@@ -208,10 +245,13 @@ button.layout {
 }
 
 button.match {
-	border: 1px solid var(--light-button);
 	margin: 0.125em;
 	padding: 0;
 	width: 3em;
+}
+
+button.match, button.sortOrder {
+	border: 1px solid var(--light-button);
 }
 
 button.page {
@@ -250,13 +290,36 @@ button.showVisits.rotating {
 	animation: 0.25s rotateCounterclockwise;
 }
 
+button.sortOrder {
+	background-position: 50% 50%;
+	background-repeat: no-repeat;
+	background-size: 1em;
+	height: 2em;
+	padding: 0;
+	width: 2em;
+}
+
+button.sortOrder.unselected {
+	background-image: var(--light-ascending-img);
+}
+
 button.unselected {
-	background: var(--light-light);
+	background-color: var(--light-light);
 	color: var(--light-button);
 }
 
 button[disabled], input[disabled], select[disabled] {
+	cursor: auto;
 	opacity: 0.25;
+}
+
+dialog {
+	background: var(--light-medium);
+	border: 0;
+	border-radius: 0.5em;
+	box-shadow: 0 1px 4px var(--light-line);
+	color: inherit;
+	padding: 2em 3em;
 }
 
 div#dateRanges {
@@ -279,6 +342,20 @@ div#generalOptions {
 	text-align: center;
 }
 
+div#midbar {
+	align-items: center;
+	display: flex;
+	justify-content: space-between;
+	margin: 1em 2em;
+}
+
+div#midbar:hover button#showDeleteAll:not(:disabled),
+div.result:hover button.delete {
+	opacity: 1;
+	transition: 0.5s opacity;
+	visibility: visible;
+}
+
 div#options {
 	display: flex;
 	justify-content: space-between;
@@ -291,8 +368,15 @@ div#pagination {
 	display: flex;
 	font-size: 80%;
 	justify-content: center;
-	margin-top: 1em;
 	gap: 4em;
+}
+
+div#prompt {
+	display: flex;
+	gap: 1em;
+	justify-content: flex-end;
+	margin-top: 2em;
+	text-align: right;
 }
 
 div#results {
@@ -316,6 +400,7 @@ div#search {
 	margin: 1em;
 	overflow: auto;
 	padding: 1em;
+	transition: 0.5s flex;
 }
 
 div#split {
@@ -339,6 +424,10 @@ div.allVisits ol {
 
 div.buttons {
 	margin: 0 1em;
+}
+
+div.buttons button {
+	padding: 0 1.25em;
 }
 
 div.dateRange {
@@ -385,12 +474,6 @@ div.result {
 	margin: 0.25em 0.25em 1em;
 	padding: 1em;
 	position: relative;
-}
-
-div.result:hover button.delete {
-	opacity: 1;
-	transition: 0.5s opacity;
-	visibility: visible;
 }
 
 div.result span.label {
@@ -716,6 +799,27 @@ select.string {
 		background-image: var(--dark-previous-img);
 	}
 
+	button#showDeleteAll, button.delete {
+		background-color: var(--dark-delete-bg);
+		background-image: var(--dark-delete-img);
+	}
+
+	button#sortAscending {
+		background-image: var(--dark-ascending-on-img);
+	}
+
+	button#sortAscending.unselected {
+		background-image: var(--dark-ascending-off-img);
+	}
+
+	button#sortDescending {
+		background-image: var(--dark-descending-on-img);
+	}
+
+	button#sortDescending.unselected {
+		background-image: var(--dark-descending-off-img);
+	}
+
 	button.clear {
 		background-image: var(--dark-clear-img);
 	}
@@ -724,20 +828,20 @@ select.string {
 		background-color: var(--dark-light);
 	}
 
-	button.closeVisits, button.showVisits {
-		background-image: var(--dark-close-img);
+	button.close {
+		background-color: var(--dark-light);
+		color: var(--dark-fg);
 	}
 
-	button.delete {
-		background-color: var(--dark-delete-bg);
-		background-image: var(--dark-delete-img);
+	button.closeVisits, button.showVisits {
+		background-image: var(--dark-close-img);
 	}
 
 	button.layout {
 		background-color: var(--dark-medium);
 	}
 
-	button.match {
+	button.match, button.sortOrder {
 		border-color: var(--dark-button);
 	}
 
@@ -759,8 +863,13 @@ select.string {
 	}
 
 	button.unselected {
-		background: var(--dark-light);
+		background-color: var(--dark-light);
 		color: var(--dark-button);
+	}
+
+	dialog {
+		background: var(--dark-medium);
+		box-shadow: 0 1px 4px var(--dark-line);
 	}
 
 	div#dateRanges {
@@ -852,6 +961,10 @@ select.string {
 		flex-direction: column;
 	}
 
+	div#pagination {
+		gap: 2em;
+	}
+
 	div.allVisits {
 		width: 50vw;
 	}
@@ -865,6 +978,10 @@ select.string {
 
 	body.compact div#search {
 		flex-basis: 12em;
+	}
+
+	div#midbar {
+		flex-wrap: wrap;
 	}
 
 	div#search div.predicate {
@@ -893,6 +1010,11 @@ select.string {
 }
 
 @media (max-width: 864px) {
+	div#pagination {
+		flex-wrap: wrap;
+		gap: 1em;
+	}
+
 	div#resultsCount {
 		min-width: unset;
 	}
@@ -905,6 +1027,10 @@ select.string {
 @media (max-width: 720px) {
 	body {
 		font-size: 80%;
+	}
+
+	button {
+		padding: 0 1.25em;
 	}
 
 	div#dateOptions {

@@ -30,27 +30,28 @@ sub make_zip {
 
 	local $/ = undef; # loads entire file into scalar
 
-	rename $manifest_name, MANIFEST_NAME
-		or die $!;
-
-	open my $handle, '<', MANIFEST_NAME
+	open my $handle, '<', $manifest_name
 		or die $!;
 	my $manifest = decode_json(<$handle>);
 	close $handle;
+
+	rename $manifest_name, MANIFEST_NAME
+		or die $!;
 
 	my $extension_name = $manifest->{'name'};
 	my $extension_version = $manifest->{'version'};
 
 	$extension_name =~ s/ /-/g;
+	$extension_name =~ s/[^-\w]//g;
 	$extension_name = lc $extension_name;
 
 	my $zip_file_name = join '-', $extension_name, $extension_version;
 	$zip_file_name = join '.', $zip_file_name, $extension;
 
+	my @file_list = (MANIFEST_NAME, FILE_LIST);
+
 	# skips hidden files
 	my @flags = qw(-x **/.* -x **/__MACOSX);
-
-	my @file_list = (MANIFEST_NAME, FILE_LIST);
 
 	system('zip', '-r', $zip_file_name, @file_list, @flags) == 0
 		or die "Error creating zip file: $!\n" ;
@@ -58,5 +59,5 @@ sub make_zip {
 	rename MANIFEST_NAME, $manifest_name
 		or die $!;
 
-	print "\nSuccessfully packaged extension: $zip_file_name\n";
+	print "Successfully packaged extension: $zip_file_name\n";
 }

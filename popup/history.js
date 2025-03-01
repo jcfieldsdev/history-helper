@@ -83,8 +83,8 @@ const SORT_BY = {
 
 // sort direction for results
 const SORT_ORDER = {
-	DESCENDING: false,
-	ASCENDING:  true
+	DESCENDING: 0,
+	ASCENDING:  1
 };
 
 // match states
@@ -97,7 +97,8 @@ const MATCH = {
 const LAYOUT = {
 	FULL:      0,
 	COMPACT:   1,
-	COLLAPSED: 2
+	COLLAPSED: 2,
+	EXPANDED:  3
 };
 
 // default values
@@ -158,10 +159,7 @@ window.addEventListener("load", function() {
 		const {key} = event;
 
 		if (key == "Enter") {
-			form.loading();
-			search.search().then(function(results) {
-				form.loadAllResults(results, search);
-			});
+			loadResults();
 		}
 	});
 	document.addEventListener("click", function(event) {
@@ -189,11 +187,13 @@ window.addEventListener("load", function() {
 			form.reloadOptions(search);
 		}
 
+		if (element.matches(".sortOrder")) {
+			form.sortOrder = Number(element.value);
+			form.reloadOptions(search);
+		}
+
 		if (element.matches("#submit")) {
-			form.loading();
-			search.search().then(function(results) {
-				form.loadAllResults(results, search);
-			});
+			loadResults();
 		}
 
 		if (element.matches(".clear")) {
@@ -251,6 +251,21 @@ window.addEventListener("load", function() {
 		if (element.matches(".delete")) {
 			form.deleteItem(element.closest(".result"), element.value);
 		}
+
+		if (element.matches("#deleteAll")) {
+			Promise.all(form.deleteAllItems()).then(function() {
+				// repeats search after deleting page to reload results
+				loadResults(form.currentPage);
+			});
+		}
+
+		if (element.matches(".show")) {
+			document.getElementById(element.value).showModal();
+		}
+
+		if (element.matches("dialog button")) {
+			element.closest("dialog").close();
+		}
 	});
 	document.addEventListener("input", function(event) {
 		const element = event.target;
@@ -305,13 +320,10 @@ window.addEventListener("load", function() {
 		if (element.matches("#sortBy")) {
 			const value = Number(element.value);
 			form.sortBy = value;
-			form.sortOrder = value == SORT_BY.TITLE || value == SORT_BY.URL;
 
-			form.reloadOptions(search);
-		}
+			const sortOrder = value == SORT_BY.TITLE || value == SORT_BY.URL;
+			form.sortOrder = Number(sortOrder);
 
-		if (element.matches("#sortOrder")) {
-			form.sortOrder = element.checked;
 			form.reloadOptions(search);
 		}
 
@@ -332,9 +344,16 @@ window.addEventListener("load", function() {
 		if (element.matches("#pageLength")) {
 			form.pageLength = Number(element.value);
 			form.reloadOptions(search);
-			form.loadPage(1);
+			form.loadPage();
 		}
 	});
+
+	function loadResults(page) {
+		form.loading();
+		search.search().then(function(results) {
+			form.loadAllResults(results, search, page);
+		});
+	}
 });
 
 function $(selector) {
@@ -490,6 +509,9 @@ Form.prototype.init = function() {
 		element.disabled = true;
 	}
 
+	$("#currentPage").disabled = true;
+	$("#showDeleteAll").disabled = true;
+
 	this.toggleOptions(false);
 };
 
@@ -595,7 +617,7 @@ Form.prototype.loading = function() {
 	$("#submit").disabled = true;
 };
 
-Form.prototype.loadAllResults = function(results, search) {
+Form.prototype.loadAllResults = function(results, search, page=1) {
 	switch (this.sortBy) { // initially sorted by visit time
 		case SORT_BY.TITLE:
 			results = results.sort(function(a, b) {
@@ -619,7 +641,7 @@ Form.prototype.loadAllResults = function(results, search) {
 	}
 
 	this.results = results;
-	this.loadPage(1);
+	this.loadPage(page);
 
 	const resultsFound = results.length > 0;
 	const dateRangeUsed = search.startDate != null || search.endDate != null;
@@ -711,7 +733,7 @@ Form.prototype.showResultsPage = function(page=1) {
 	const totalPages = Math.ceil(this.results.length / pageLength);
 	const firstResultAdjusted = Math.min(firstResult + 1, this.results.length);
 
-	$("#pagination").classList.toggle("hidden", totalPages == 1);
+	$("#currentPage").disabled = totalPages < 2 || this.results.length == 0;
 	$("#currentPage").value = page;
 	$("#currentPage").max = totalPages;
 	$("#totalPages").textContent = totalPages.toLocaleString();
@@ -720,6 +742,7 @@ Form.prototype.showResultsPage = function(page=1) {
 	$("#totalResults").textContent = this.results.length.toLocaleString();
 	$("#previousPage").disabled = page == 1;
 	$("#nextPage").disabled = page == totalPages;
+	$("#showDeleteAll").disabled = this.results.length == 0;
 };
 
 Form.prototype.showVisits = function(resultElement, url) {
@@ -781,9 +804,19 @@ Form.prototype.deleteItem = function(resultElement, url) {
 	});
 };
 
+Form.prototype.deleteAllItems = function() {
+	const pageLength = Math.pow(10, this.pageLength);
+	const firstResult = Math.max(pageLength * (this.currentPage - 1), 0);
+	const lastResult = Math.min(firstResult + pageLength, this.results.length);
+
+	return this.results.slice(firstResult, lastResult).map(function(result) {
+		const {url} = result;
+		return chrome.history.deleteUrl({url});
+	});
+};
+
 Form.prototype.reloadOptions = function(search) {
 	$("#sortBy").value = this.sortBy;
-	$("#sortOrder").checked = this.sortOrder;
 	$("#pageLength").value = this.pageLength;
 
 	$("#dateRange").value = search.dateRange;
@@ -802,6 +835,11 @@ Form.prototype.reloadOptions = function(search) {
 	for (const element of $$(".match")) {
 		const value = Number(element.value);
 		element.classList.toggle("unselected", search.match != value);
+	}
+
+	for (const element of $$(".sortOrder")) {
+		const value = Number(element.value);
+		element.classList.toggle("unselected", this.sortOrder != value);
 	}
 };
 
@@ -850,15 +888,18 @@ Form.prototype.setLayout = function(layout) {
 	const body = $("body");
 	body.classList.toggle("collapsed", layout == LAYOUT.COLLAPSED);
 	body.classList.toggle("compact", layout == LAYOUT.COMPACT);
+	body.classList.toggle("expanded", layout == LAYOUT.EXPANDED);
 
 	$("#collapse").hidden = layout == LAYOUT.COLLAPSED;
-	$("#expand").hidden = layout == LAYOUT.FULL;
+	$("#expand").hidden = layout == LAYOUT.EXPANDED;
 
 	this.layout = layout;
 };
 
 Form.prototype.collapseLayout = function() {
-	if (this.layout == LAYOUT.FULL) {
+	if (this.layout == LAYOUT.EXPANDED) {
+		this.setLayout(LAYOUT.FULL);
+	} else if (this.layout == LAYOUT.FULL) {
 		this.setLayout(LAYOUT.COMPACT);
 	} else {
 		this.setLayout(LAYOUT.COLLAPSED);
@@ -868,8 +909,10 @@ Form.prototype.collapseLayout = function() {
 Form.prototype.expandLayout = function() {
 	if (this.layout == LAYOUT.COLLAPSED) {
 		this.setLayout(LAYOUT.COMPACT);
-	} else {
+	} else if (this.layout == LAYOUT.COMPACT) {
 		this.setLayout(LAYOUT.FULL);
+	} else {
+		this.setLayout(LAYOUT.EXPANDED);
 	}
 };
 

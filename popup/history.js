@@ -70,15 +70,17 @@ const DATE_RANGE = {
 	LAST_WEEK:      3,
 	LAST_MONTH:     4,
 	LAST_YEAR:      5,
-	ALL_TIME:       6
+	ALL_TIME:       6,
+	YESTERDAY:      7
 };
 
 // sort criteria for results
 const SORT_BY = {
-	TITLE:        0,
-	URL:          1,
-	LAST_VISITED: 2,
-	VISIT_COUNT:  3
+	TITLE:         0,
+	URL:           1,
+	FIRST_VISITED: 4,
+	LAST_VISITED:  2,
+	VISIT_COUNT:   3
 };
 
 // sort direction for results
@@ -253,7 +255,7 @@ window.addEventListener("load", function() {
 		}
 
 		if (element.matches("#deleteAll")) {
-			Promise.all(form.deleteAllItems()).then(function() {
+			form.deleteAllItems().then(function() {
 				// repeats search after deleting page to reload results
 				loadResults(form.currentPage);
 			});
@@ -350,8 +352,11 @@ window.addEventListener("load", function() {
 
 	function loadResults(page) {
 		form.loading();
-		search.search().then(function(results) {
-			form.loadAllResults(results, search, page);
+		search.search().then(function(historyItems) {
+			const results = new Results(historyItems, search);
+			results.compileVisits().then(function() {
+				form.loadAllResults(results, page);
+			});
 		});
 	}
 });
@@ -617,54 +622,18 @@ Form.prototype.loading = function() {
 	$("#submit").disabled = true;
 };
 
-Form.prototype.loadAllResults = function(results, search, page=1) {
-	switch (this.sortBy) { // initially sorted by visit time
-		case SORT_BY.TITLE:
-			results = results.sort(function(a, b) {
-				return sortByString(a.title, b.title);
-			});
-			break;
-		case SORT_BY.URL:
-			results = results.sort(function(a, b) {
-				return sortByString(a.url, b.url);
-			});
-			break;
-		case SORT_BY.VISIT_COUNT:
-			results = results.sort(function(a, b) {
-				return sortByNumber(a.visitCount, b.visitCount);
-			});
-			break;
-	}
-
-	if (this.sortOrder == SORT_ORDER.ASCENDING) {
-		results = results.reverse();
-	}
-
+Form.prototype.loadAllResults = function(results, page=1) {
 	this.results = results;
+	results.sort(this.sortBy, this.sortOrder);
+
 	this.loadPage(page);
 
 	const resultsFound = results.length > 0;
-	const dateRangeUsed = search.startDate != null || search.endDate != null;
+	const dateRangeUsed = results.startDate != null || results.endDate != null;
 
 	$("#submit").disabled = false;
 	$("#noResults").hidden = resultsFound || dateRangeUsed;
 	$("#noResultsWithDate").hidden = resultsFound || !dateRangeUsed;
-
-	function sortByNumber(a, b) {
-		return b - a;
-	}
-
-	function sortByString(a, b) {
-		if (a == null) {
-			return 1;
-		}
-
-		if (b == null) {
-			return -1;
-		}
-
-		return b.localeCompare(a);
-	}
 };
 
 Form.prototype.loadPage = function(page=1) {
@@ -695,7 +664,6 @@ Form.prototype.showResultsPage = function(page=1) {
 	const pageLength = Math.pow(10, this.pageLength);
 	const firstResult = Math.max(pageLength * (page - 1), 0);
 	const lastResult = Math.min(firstResult + pageLength, this.results.length);
-	const results = this.results.slice(firstResult, lastResult);
 
 	this.currentPage = page;
 
@@ -704,11 +672,12 @@ Form.prototype.showResultsPage = function(page=1) {
 
 	const NO_TITLE = "(no title)";
 
-	for (const result of results) {
+	for (const result of this.results.slice(firstResult, lastResult)) {
 		const {title, url, lastVisitTime, visitCount} = result;
 
-		const dateTime = new Date(lastVisitTime);
-		const lastVisit = dateTime.toLocaleString([], DATE_FORMAT);
+		const firstVisitTime = this.results.visits.get(url).at(-1).visitTime;
+		const firstVisit = this.formatDate(firstVisitTime);
+		const lastVisit = this.formatDate(lastVisitTime);
 
 		const resultElement = $("#result").content.cloneNode(true);
 		resultElement.querySelector(".title").textContent = title || NO_TITLE;
@@ -718,10 +687,12 @@ Form.prototype.showResultsPage = function(page=1) {
 		resultElement.querySelector(".link").textContent = url;
 		resultElement.querySelector(".link").title = url;
 		resultElement.querySelector(".setHost").value = url;
-		resultElement.querySelector(".lastVisit").textContent = lastVisit;
+		resultElement.querySelector(".first.dateTime").textContent = firstVisit;
+		resultElement.querySelector(".first.setDate").value = firstVisitTime;
+		resultElement.querySelector(".last.dateTime").textContent = lastVisit;
+		resultElement.querySelector(".last.setDate").value = lastVisitTime;
 		resultElement.querySelector(".visitCount").textContent = visitCount;
-		resultElement.querySelector(".setDate").value = lastVisitTime;
-		resultElement.querySelector(".showVisits").hidden = visitCount < 2;
+		resultElement.querySelector(".visitRow").hidden = visitCount < 3;
 		resultElement.querySelector(".showVisits").value = url;
 		resultElement.querySelector(".closeVisits").hidden = true;
 		resultElement.querySelector(".delete").value = url;
@@ -752,15 +723,13 @@ Form.prototype.showVisits = function(resultElement, url) {
 	if (allVisitsElement.children.length > 0) {
 		allVisitsElement.hidden = false;
 	} else { // generates list for the first time
-		chrome.history.getVisits({url}).then(function(visits) {
-			const div = $("#allVisits").content.cloneNode(true);
+		if (this.results.visits.has(url)) {
 			const ol = document.createElement("ol");
+			ol.className = "allVisits";
 
-			for (const visit of visits) {
+			for (const visit of this.results.visits.get(url).reverse()) {
 				const {visitTime} = visit;
-
-				const dateTime = new Date(visitTime);
-				const lastVisit = dateTime.toLocaleString([], DATE_FORMAT);
+				const lastVisit = this.formatDate(visitTime);
 
 				const li = $("#visit").content.cloneNode(true);
 				li.querySelector(".dateTime").textContent = lastVisit;
@@ -768,9 +737,8 @@ Form.prototype.showVisits = function(resultElement, url) {
 				ol.append(li);
 			}
 
-			div.querySelector("ol").replaceWith(ol);
-			allVisitsElement.replaceWith(div);
-		});
+			allVisitsElement.replaceWith(ol);
+		}
 	}
 
 	const closeButton = resultElement.querySelector(".closeVisits");
@@ -808,11 +776,12 @@ Form.prototype.deleteAllItems = function() {
 	const pageLength = Math.pow(10, this.pageLength);
 	const firstResult = Math.max(pageLength * (this.currentPage - 1), 0);
 	const lastResult = Math.min(firstResult + pageLength, this.results.length);
+	const resultsPage = this.results.slice(firstResult, lastResult);
 
-	return this.results.slice(firstResult, lastResult).map(function(result) {
+	return Promise.all(resultsPage.map(function(result) {
 		const {url} = result;
 		return chrome.history.deleteUrl({url});
-	});
+	}));
 };
 
 Form.prototype.reloadOptions = function(search) {
@@ -847,6 +816,10 @@ Form.prototype.toggleOptions = function(state=false) {
 	for (const element of $$(".option")) {
 		element.disabled = !state;
 	}
+};
+
+Form.prototype.formatDate = function(timestamp) {
+	return new Date(timestamp).toLocaleString([], DATE_FORMAT);
 };
 
 Form.prototype.setDate = function(search, visitTime) {
@@ -1137,6 +1110,14 @@ Search.prototype.getText = function() {
 
 Search.prototype.getDateRange = function() {
 	switch (this.dateRange) {
+		case DATE_RANGE.YESTERDAY:
+			const today = new Date();
+			today.setHours(0, 0, 0, 0);
+
+			return {
+				startTime: new Date(today).setDate(today.getDate() - 1),
+				endTime:   today.getTime()
+			};
 		case DATE_RANGE.LAST_HOUR:
 			return {
 				startTime: new Date().setHours(new Date().getHours() - 1),
@@ -1169,6 +1150,7 @@ Search.prototype.getDateRange = function() {
 			};
 	}
 
+	// specific range
 	const startTime = this.startDate == null
 	                ? 0
 	                : convertToUTC(this.startDate);
@@ -1186,4 +1168,87 @@ Search.prototype.getDateRange = function() {
 	function convertToUTC(date) {
 		return new Date(date).setHours(new Date(date).getHours() + TZ_OFFSET);
 	}
+};
+
+/*
+ * Results prototype
+ */
+
+function Results(historyItems, search) {
+	this.historyItems = historyItems;
+	this.length = historyItems.length;
+	this.visits = new Map();
+
+	this.startDate = search.startDate;
+	this.endDate = search.endDate;
+}
+
+Results.prototype.compileVisits = function() {
+	const promises = [];
+
+	for (const historyItem of this.historyItems) {
+		const {url} = historyItem;
+
+		if (this.visits.has(url)) {
+			continue;
+		}
+
+		promises.push(chrome.history.getVisits({url}).then(function(visits) {
+			this.visits.set(url, visits);
+		}.bind(this)));
+	}
+
+	return Promise.all(promises);
+};
+
+Results.prototype.sort = function(sortBy, sortOrder) {
+	switch (sortBy) { // initially sorted by last visited time
+		case SORT_BY.TITLE:
+			this.historyItems = this.historyItems.sort(function(a, b) {
+				return sortByString(a.title, b.title);
+			});
+			break;
+		case SORT_BY.URL:
+			this.historyItems = this.historyItems.sort(function(a, b) {
+				return sortByString(a.url, b.url);
+			});
+			break;
+		case SORT_BY.FIRST_VISITED:
+			this.historyItems = this.historyItems.sort(function(a, b) {
+				const aTime = this.visits.get(a.url).at(-1).visitTime;
+				const bTime = this.visits.get(b.url).at(-1).visitTime;
+
+				return sortByNumber(bTime, aTime);
+			}.bind(this));
+			break;
+		case SORT_BY.VISIT_COUNT:
+			this.historyItems = this.historyItems.sort(function(a, b) {
+				return sortByNumber(a.visitCount, b.visitCount);
+			});
+			break;
+	}
+
+	if (sortOrder == SORT_ORDER.ASCENDING) {
+		this.historyItems = this.historyItems.reverse();
+	}
+
+	function sortByNumber(a, b) {
+		return b - a;
+	}
+
+	function sortByString(a, b) {
+		if (a == null) {
+			return 1;
+		}
+
+		if (b == null) {
+			return -1;
+		}
+
+		return b.localeCompare(a);
+	}
+};
+
+Results.prototype.slice = function(firstResult, lastResult) {
+	return this.historyItems.slice(firstResult, lastResult);
 };

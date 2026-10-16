@@ -65,8 +65,7 @@ a:hover, a:active {
 	text-decoration: underline;
 }
 
-a:hover, a:active, button:hover:not(:disabled),
-input[type="checkbox"]:hover {
+a:hover, a:active, button:hover:not(:disabled), input[type="checkbox"]:hover {
 	filter: brightness(0.75);
 	transition: 0.25s filter;
 }
@@ -308,6 +307,10 @@ button.unselected {
 	color: var(--light-button);
 }
 
+button:focus {
+	outline: 2px solid var(--light-fg);
+}
+
 button[disabled], input[disabled], select[disabled] {
 	cursor: auto;
 	opacity: 0.25;
@@ -371,14 +374,6 @@ div#pagination {
 	gap: 4em;
 }
 
-div#prompt {
-	display: flex;
-	gap: 1em;
-	justify-content: flex-end;
-	margin-top: 2em;
-	text-align: right;
-}
-
 div#results {
 	margin: 1em;
 	overflow: auto;
@@ -409,19 +404,6 @@ div#split {
 	padding: 0 1em;
 }
 
-div.allVisits {
-	animation: 0.25s expand;
-	width: 30vw;
-}
-
-div.allVisits ol {
-	list-style-position: inside;
-	margin: 0;
-	max-height: 10em;
-	overflow: auto;
-	padding: 0 5em 0 0;
-}
-
 div.buttons {
 	margin: 0 1em;
 }
@@ -438,12 +420,6 @@ div.dateRange {
 div.dateRange span.label {
 	display: inline-block;
 	width: 6em;
-}
-
-div.lastVisited {
-	align-items: center;
-	display: flex;
-	gap: 0.5em;
 }
 
 div.message {
@@ -467,6 +443,14 @@ div.predicate {
 div.predicate label {
 	font-size: 0.75rem;
 	margin: 0 0.5em;
+}
+
+div.prompt {
+	display: flex;
+	gap: 1em;
+	justify-content: flex-end;
+	margin-top: 2em;
+	text-align: right;
 }
 
 div.result {
@@ -522,12 +506,6 @@ div.title.note {
 	opacity: 50%;
 }
 
-div.visits {
-	display: flex;
-	justify-content: space-between;
-	overflow: hidden;
-}
-
 div.widgets {
 	line-height: 100%;
 	position: absolute;
@@ -574,6 +552,10 @@ input.date, input.query {
 
 input.flashing {
 	animation: 1s flash;
+}
+
+input:focus, select:focus {
+	outline: 2px solid var(--light-button);
 }
 
 input[type="checkbox"] {
@@ -655,6 +637,16 @@ label {
 	user-select: none;
 }
 
+ol.allVisits {
+	animation: 0.25s expand;
+	list-style-position: inside;
+	margin: 0.5em 0 0;
+	max-height: 10em;
+	overflow: auto;
+	padding: 0 5em 0 0;
+	width: 30vw;
+}
+
 option {
 	font-weight: normal;
 }
@@ -678,6 +670,10 @@ select#sortBy, select.subject {
 
 select.string {
 	width: 14em;
+}
+
+td {
+	vertical-align: top;
 }
 
 @keyframes delete {
@@ -867,6 +863,10 @@ select.string {
 		color: var(--dark-button);
 	}
 
+	button:focus {
+		outline-color: var(--dark-fg);
+	}
+
 	dialog {
 		background: var(--dark-medium);
 		box-shadow: 0 1px 4px var(--dark-line);
@@ -900,6 +900,10 @@ select.string {
 	input, select {
 		background-color: var(--dark-light);
 		color: inherit;
+	}
+
+	input:focus, select:focus {
+		outline-color: var(--dark-button);
 	}
 
 	input[type="checkbox"] {
@@ -943,12 +947,12 @@ select.string {
 		width: 90%;
 	}
 
-	div.allVisits {
-		width: 40vw;
-	}
-
 	div.optionGroup {
 		flex-direction: column;
+	}
+
+	ol.allVisits {
+		width: 40vw;
 	}
 }
 
@@ -965,7 +969,7 @@ select.string {
 		gap: 2em;
 	}
 
-	div.allVisits {
+	ol.allVisits {
 		width: 50vw;
 	}
 }
@@ -994,12 +998,12 @@ select.string {
 		margin-bottom: 0.5em;
 	}
 
-	div.allVisits {
-		width: 60vw;
-	}
-
 	div.row {
 		border-bottom: 1px solid var(--light-line);
+	}
+
+	ol.allVisits {
+		width: 60vw;
 	}
 
 	@media (prefers-color-scheme: dark) {
@@ -1047,7 +1051,7 @@ select.string {
 		margin-bottom: 0.5em;
 	}
 
-	div.allVisits {
+	ol.allVisits {
 		width: 70vw;
 	}
 }

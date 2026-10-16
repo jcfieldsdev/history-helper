@@ -13,6 +13,7 @@
 			<div class="optionGroup">
 				<div><label>Date range:</label>
 					<select id="dateRange" class="option">
+						<option value="7">Yesterday</option>
 						<option value="1">Last hour</option>
 						<option value="2">Last day</option>
 						<option value="3" selected="selected">Last week</option>
@@ -26,6 +27,7 @@
 					<select id="sortBy" class="option">
 						<option value="0">Title</option>
 						<option value="1">URL</option>
+						<option value="4">First visited</option>
 						<option value="2">Last visited</option>
 						<option value="3">Visit count</option>
 					</select>
@@ -91,7 +93,7 @@
 	</div>
 	<dialog id="deleteAllDialog">
 		<p>Do you want to remove the entire page of results from the browser history?</p>
-		<div id="prompt">
+		<div class="prompt">
 			<button type="button" class="close">Cancel</button>
 			<button type="button" id="deleteAll">Delete All</button>
 		</div>
@@ -162,24 +164,45 @@
 				<button type="button" title="Add a search condition for this host" class="setHost"><span>Set</span></button>
 				<a class="link"></a>
 			</div>
-			<div class="visits">
-				<div class="lastVisited">
-					<span class="label">Last visited:</span>
-					<button type="button" title="Set the date range to this day" class="setDate"><span>Set</span></button>
-					<span class="lastVisit dateTime"></span>
-					<button type="button" title="Show all previous visits to this page" class="showVisits"><span>Show</span></button>
-					<button type="button" title="Hide all previous visits to this page" class="closeVisits"><span>Close</span></button>
-				</div>
-				<div><span class="label">Visit count:</span> <span class="visitCount"></span></div>
-			</div>
-			<div class="allVisits"></div>
+			<table class="visits">
+				<tr>
+					<td class="firstVisited">
+						<span class="label">First visited:</span>
+					</td>
+					<td>
+						<button type="button" title="Set the date range to this day" class="first setDate"><span>Set</span></button>
+						<span class="first dateTime"></span>
+					</td>
+				</tr>
+				<tr>
+					<td class="lastVisited">
+						<span class="label">Last visited:</span>
+					</td>
+					<td>
+						<button type="button" title="Set the date range to this day" class="last setDate"><span>Set</span></button>
+						<span class="last dateTime"></span>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<span class="label">Visit count:</span>
+					</td>
+					<td>
+						<span class="visitCount"></span>
+					</td>
+				</tr>
+				<tr class="visitRow">
+					<td>
+						<span class="label">All visits:</span>
+					</td>
+					<td>
+						<button type="button" title="Show all previous visits to this page" class="showVisits"><span>Show</span></button>
+						<button type="button" title="Hide all previous visits to this page" class="closeVisits"><span>Close</span></button>
+						<ol class="allVisits"></ol>
+					</td>
+				</tr>
+			</table>
 			<div class="widgets"><button type="button" title="Remove this page from the browser history" class="delete"><span>Delete</span></button></div>
-		</div>
-	</template>
-	<template id="allVisits">
-		<div class="allVisits">
-			<div><span class="label">All visits:</span></div>
-			<ol></ol>
 		</div>
 	</template>
 	<template id="visit">

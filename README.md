@@ -55,7 +55,7 @@ Below the search fields are some options.
 - Last year
 - All time
 
-Or you can select *Specific range...*, which enables the **Start date** and **End date** fields for inputting a specific date range. Each date field has a button to reset it.
+Or you can select *Specific range...*, which enables the **Start date** and **End date** fields for inputting a specific date range. Each date field has a button to reset it. This range includes any visits to a particular page.
 
 **Sort by** changes the order for displaying search results:
 
@@ -64,13 +64,13 @@ Or you can select *Specific range...*, which enables the **Start date** and **En
 - Last visited
 - Visit count
 
-By default, *Title* and *URL* sorted in ascending order and *Last visited* and *Visit count* are sorted in descending order, but the order can be reversed by clicking on one of the sort icons below the options.
+By default, *Title*, *URL*, and *First visited* are sorted in ascending order and *Last visited* and *Visit count* are sorted in descending order, but the order can be reversed by clicking on one of the sort icons below the options.
 
 **Match** chooses whether *Any* or *All* search fields must be true for a history entry to match.
 
 **Search entries** decides how many history entries to search. Smaller values result in less comprehensive search sets, but larger values take longer to complete. This value may be limited by the date range specified; for example, even if 100,000 entries is selected, it may end up searching far fewer than that if the specified date range does not contain that many history entries.
 
-Finally, the **Search** button starts the search. For performance reasons, the extension does not automatically search the history as you type. It is also necessary to search again to change the sort order of results.
+Finally, the **Search** button starts the search. For performance reasons, the extension does not automatically search the history as you type. It is necessary to search again to change the sort order of results.
 
 A split bar appears in between the options and the results. It can be used to shrink or expand the amount of space taken up by the search fields and the options.
 

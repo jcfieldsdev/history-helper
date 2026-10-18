@@ -89,6 +89,12 @@ const SORT_ORDER = {
 	ASCENDING:  1
 };
 
+// grouping method for results
+const GROUP_BY = {
+	PAGE:  0,
+	VISIT: 1
+};
+
 // match states
 const MATCH = {
 	ANY: 0,
@@ -110,6 +116,7 @@ const DEFAULTS = {
 	DATE_RANGE:  DATE_RANGE.LAST_WEEK,
 	SORT_BY:     SORT_BY.LAST_VISITED,
 	SORT_ORDER:  SORT_ORDER.DESCENDING,
+	GROUP_BY:    GROUP_BY.PAGE,
 	PAGE_LENGTH: 2, // as power of 10
 	MATCH:       MATCH.ALL,
 	MIN_RESULTS: 1,
@@ -194,6 +201,11 @@ window.addEventListener("load", function() {
 			form.reloadOptions(search);
 		}
 
+		if (element.matches(".groupBy")) {
+			form.groupBy = Number(element.value);
+			form.reloadOptions(search);
+		}
+
 		if (element.matches("#submit")) {
 			loadResults();
 		}
@@ -261,8 +273,8 @@ window.addEventListener("load", function() {
 			});
 		}
 
-		if (element.matches(".show")) {
-			document.getElementById(element.value).showModal();
+		if (element.closest(".show")) {
+			document.getElementById(element.closest(".show").value).showModal();
 		}
 
 		if (element.matches("dialog button")) {
@@ -323,7 +335,9 @@ window.addEventListener("load", function() {
 			const value = Number(element.value);
 			form.sortBy = value;
 
-			const sortOrder = value == SORT_BY.TITLE || value == SORT_BY.URL;
+			const sortOrder = value == SORT_BY.TITLE
+			               || value == SORT_BY.URL
+			               || value == SORT_BY.FIRST_VISITED;
 			form.sortOrder = Number(sortOrder);
 
 			form.reloadOptions(search);
@@ -478,6 +492,7 @@ function Form() {
 	this.layout = DEFAULTS.LAYOUT;
 	this.sortBy = DEFAULTS.SORT_BY;
 	this.sortOrder = DEFAULTS.SORT_ORDER;
+	this.groupBy = DEFAULTS.GROUP_BY;
 	this.pageLength = DEFAULTS.PAGE_LENGTH;
 
 	this.searching = false;
@@ -487,11 +502,12 @@ function Form() {
 
 Form.prototype.load = function(options) {
 	if (options != undefined) {
-		const {layout, sortBy, sortOrder, pageLength} = options;
+		const {layout, sortBy, sortOrder, groupBy, pageLength} = options;
 
 		this.layout     = layout     ?? DEFAULTS.LAYOUT;
 		this.sortBy     = sortBy     ?? DEFAULTS.SORT_BY;
 		this.sortOrder  = sortOrder  ?? DEFAULTS.SORT_ORDER;
+		this.groupBy    = groupBy    ?? DEFAULTS.GROUP_BY;
 		this.pageLength = pageLength ?? DEFAULTS.PAGE_LENGTH;
 	}
 };
@@ -501,6 +517,7 @@ Form.prototype.save = function() {
 		layout:     this.layout,
 		sortBy:     this.sortBy,
 		sortOrder:  this.sortOrder,
+		groupBy:    this.groupBy,
 		pageLength: this.pageLength
 	};
 };
@@ -515,7 +532,6 @@ Form.prototype.init = function() {
 	}
 
 	$("#currentPage").disabled = true;
-	$("#showDeleteAll").disabled = true;
 
 	this.toggleOptions(false);
 };
@@ -577,7 +593,7 @@ Form.prototype.createPredicate = function(rowElement, row) {
 
 	element.querySelector(".condition").value = row.condition;
 
-	// does not replace if existing node is the same,
+	// does not replace if existing node is the same;
 	// avoids clearing user input unnecessarily
 	if (rowElement.dataset.predicate != row.predicate) {
 		rowElement.dataset.predicate = row.predicate;
@@ -624,6 +640,7 @@ Form.prototype.loading = function() {
 
 Form.prototype.loadAllResults = function(results, page=1) {
 	this.results = results;
+	results.group(this.groupBy);
 	results.sort(this.sortBy, this.sortOrder);
 
 	this.loadPage(page);
@@ -667,39 +684,11 @@ Form.prototype.showResultsPage = function(page=1) {
 
 	this.currentPage = page;
 
-	const resultsContainerElement = document.createElement("div");
-	resultsContainerElement.id = "results";
-
-	const NO_TITLE = "(no title)";
-
-	for (const result of this.results.slice(firstResult, lastResult)) {
-		const {title, url, lastVisitTime, visitCount} = result;
-
-		const firstVisitTime = this.results.visits.get(url).at(-1).visitTime;
-		const firstVisit = this.formatDate(firstVisitTime);
-		const lastVisit = this.formatDate(lastVisitTime);
-
-		const resultElement = $("#result").content.cloneNode(true);
-		resultElement.querySelector(".title").textContent = title || NO_TITLE;
-		resultElement.querySelector(".title").title = title || NO_TITLE;
-		resultElement.querySelector(".title").classList.toggle("note", !title);
-		resultElement.querySelector(".link").href = url;
-		resultElement.querySelector(".link").textContent = url;
-		resultElement.querySelector(".link").title = url;
-		resultElement.querySelector(".setHost").value = url;
-		resultElement.querySelector(".first.dateTime").textContent = firstVisit;
-		resultElement.querySelector(".first.setDate").value = firstVisitTime;
-		resultElement.querySelector(".last.dateTime").textContent = lastVisit;
-		resultElement.querySelector(".last.setDate").value = lastVisitTime;
-		resultElement.querySelector(".visitCount").textContent = visitCount;
-		resultElement.querySelector(".visitRow").hidden = visitCount < 3;
-		resultElement.querySelector(".showVisits").value = url;
-		resultElement.querySelector(".closeVisits").hidden = true;
-		resultElement.querySelector(".delete").value = url;
-		resultsContainerElement.append(resultElement);
+	if (this.groupBy == GROUP_BY.PAGE) {
+		this.groupResultsByPage(firstResult, lastResult);
+	} else {
+		this.groupResultsByVisit(firstResult, lastResult);
 	}
-
-	$("#results").replaceWith(resultsContainerElement);
 
 	const totalPages = Math.ceil(this.results.length / pageLength);
 	const firstResultAdjusted = Math.min(firstResult + 1, this.results.length);
@@ -713,7 +702,79 @@ Form.prototype.showResultsPage = function(page=1) {
 	$("#totalResults").textContent = this.results.length.toLocaleString();
 	$("#previousPage").disabled = page == 1;
 	$("#nextPage").disabled = page == totalPages;
-	$("#showDeleteAll").disabled = this.results.length == 0;
+};
+
+Form.prototype.groupResultsByPage = function(firstResult, lastResult) {
+	const resultsContainerElement = document.createElement("div");
+	resultsContainerElement.id = "results";
+
+	const NO_TITLE = "(no title)";
+
+	for (const result of this.results.slice(firstResult, lastResult)) {
+		const {title, url, lastVisitTime, visitCount} = result;
+
+		const firstVisitTime = this.results.visits.get(url).at(-1);
+		const firstVisit = this.formatDate(firstVisitTime);
+		const lastVisit = this.formatDate(lastVisitTime);
+		const visitNumber = visitCount.toLocaleString();
+
+		const resultElement = $("#pageResult").content.cloneNode(true);
+		resultElement.querySelector(".title").textContent = title || NO_TITLE;
+		resultElement.querySelector(".title").title = title || NO_TITLE;
+		resultElement.querySelector(".title").classList.toggle("note", !title);
+		resultElement.querySelector(".link").href = url;
+		resultElement.querySelector(".link").textContent = url;
+		resultElement.querySelector(".link").title = url;
+		resultElement.querySelector(".setHost").value = url;
+		resultElement.querySelector(".first.dateTime").textContent = firstVisit;
+		resultElement.querySelector(".first.setDate").value = firstVisitTime;
+		resultElement.querySelector(".last.dateTime").textContent = lastVisit;
+		resultElement.querySelector(".last.setDate").value = lastVisitTime;
+		resultElement.querySelector(".visitCount").textContent = visitNumber;
+		resultElement.querySelector(".visitRow").hidden = visitCount < 3;
+		resultElement.querySelector(".showVisits").value = url;
+		resultElement.querySelector(".closeVisits").hidden = true;
+		resultElement.querySelector(".delete").value = url;
+		resultsContainerElement.append(resultElement);
+	}
+
+	resultsContainerElement.append($("#pageButtons").content.cloneNode(true));
+	$("#results").replaceWith(resultsContainerElement);
+};
+
+Form.prototype.groupResultsByVisit = function(firstResult, lastResult) {
+	const resultsContainerElement = document.createElement("div");
+	resultsContainerElement.id = "results";
+
+	const resultsTableElement = document.createElement("table");
+	resultsTableElement.id = "visits";
+
+	const NO_TITLE = "(no title)";
+
+	for (const result of this.results.slice(firstResult, lastResult)) {
+		const {title, url, visitTime, visitCount} = result;
+
+		const visitDate = this.formatDate(visitTime);
+		const visitNumber = (visitCount + 1).toLocaleString();
+
+		const resultElement = $("#visitResult").content.cloneNode(true);
+		resultElement.querySelector(".title").textContent = title || NO_TITLE;
+		resultElement.querySelector(".title").title = title || NO_TITLE;
+		resultElement.querySelector(".title").classList.toggle("note", !title);
+		resultElement.querySelector(".link").href = url;
+		resultElement.querySelector(".link").textContent = url;
+		resultElement.querySelector(".link").title = url;
+		resultElement.querySelector(".setHost").value = url;
+		resultElement.querySelector(".visit.dateTime").textContent = visitDate;
+		resultElement.querySelector(".visit.setDate").value = visitTime;
+		resultElement.querySelector(".visitNumber").textContent = visitNumber;
+		resultElement.querySelector(".delete").value = url;
+		resultsTableElement.append(resultElement);
+	}
+
+	resultsContainerElement.append(resultsTableElement);
+	resultsContainerElement.append($("#pageButtons").content.cloneNode(true));
+	$("#results").replaceWith(resultsContainerElement);
 };
 
 Form.prototype.showVisits = function(resultElement, url) {
@@ -727,11 +788,10 @@ Form.prototype.showVisits = function(resultElement, url) {
 			const ol = document.createElement("ol");
 			ol.className = "allVisits";
 
-			for (const visit of this.results.visits.get(url).reverse()) {
-				const {visitTime} = visit;
+			for (const visitTime of this.results.visits.get(url).reverse()) {
 				const lastVisit = this.formatDate(visitTime);
 
-				const li = $("#visit").content.cloneNode(true);
+				const li = $("#visitItem").content.cloneNode(true);
 				li.querySelector(".dateTime").textContent = lastVisit;
 				li.querySelector(".setDate").value = visitTime;
 				ol.append(li);
@@ -809,6 +869,11 @@ Form.prototype.reloadOptions = function(search) {
 	for (const element of $$(".sortOrder")) {
 		const value = Number(element.value);
 		element.classList.toggle("unselected", this.sortOrder != value);
+	}
+
+	for (const element of $$(".groupBy")) {
+		const value = Number(element.value);
+		element.classList.toggle("unselected", this.groupBy != value);
 	}
 };
 
@@ -1179,6 +1244,9 @@ function Results(historyItems, search) {
 	this.length = historyItems.length;
 	this.visits = new Map();
 
+	this.sortBy = DEFAULTS.SORT_BY;
+	this.groupBy = DEFAULTS.GROUP_BY;
+
 	this.startDate = search.startDate;
 	this.endDate = search.endDate;
 }
@@ -1194,7 +1262,9 @@ Results.prototype.compileVisits = function() {
 		}
 
 		promises.push(chrome.history.getVisits({url}).then(function(visits) {
-			this.visits.set(url, visits);
+			this.visits.set(url, visits.map(function(visit) {
+				return visit.visitTime;
+			}));
 		}.bind(this)));
 	}
 
@@ -1202,7 +1272,9 @@ Results.prototype.compileVisits = function() {
 };
 
 Results.prototype.sort = function(sortBy, sortOrder) {
-	switch (sortBy) { // initially sorted by last visited time
+	this.sortBy = sortBy;
+
+	switch (sortBy) {
 		case SORT_BY.TITLE:
 			this.historyItems = this.historyItems.sort(function(a, b) {
 				return sortByString(a.title, b.title);
@@ -1214,12 +1286,26 @@ Results.prototype.sort = function(sortBy, sortOrder) {
 			});
 			break;
 		case SORT_BY.FIRST_VISITED:
-			this.historyItems = this.historyItems.sort(function(a, b) {
-				const aTime = this.visits.get(a.url).at(-1).visitTime;
-				const bTime = this.visits.get(b.url).at(-1).visitTime;
+			if (this.groupBy == GROUP_BY.VISIT) {
+				this.historyItems = this.historyItems.sort(function(a, b) {
+					return sortByNumber(a.visitTime, b.visitTime);
+				}.bind(this));
+			} else {
+				this.historyItems = this.historyItems.sort(function(a, b) {
+					const aTime = this.visits.get(a.url).at(-1);
+					const bTime = this.visits.get(b.url).at(-1);
 
-				return sortByNumber(bTime, aTime);
-			}.bind(this));
+					return sortByNumber(aTime, bTime);
+				}.bind(this));
+			}
+			break;
+		case SORT_BY.LAST_VISITED:
+			 // initially sorted by last visited time when grouped by page
+			if (this.groupBy == GROUP_BY.VISIT) {
+				this.historyItems = this.historyItems.sort(function(a, b) {
+					return sortByNumber(a.visitTime, b.visitTime);
+				}.bind(this));
+			}
 			break;
 		case SORT_BY.VISIT_COUNT:
 			this.historyItems = this.historyItems.sort(function(a, b) {
@@ -1247,6 +1333,33 @@ Results.prototype.sort = function(sortBy, sortOrder) {
 
 		return b.localeCompare(a);
 	}
+};
+
+Results.prototype.group = function(groupBy) {
+	this.groupBy = groupBy;
+
+	if (groupBy == GROUP_BY.PAGE) { // default grouping
+		return;
+	}
+
+	const historyItems = [];
+
+	for (const historyItem of this.historyItems) {
+		const {title, url} = historyItem;
+
+		if (!this.visits.has(url)) {
+			continue;
+		}
+
+		const visitTimes = this.visits.get(url);
+
+		for (const [visitCount, visitTime] of visitTimes.reverse().entries()) {
+			historyItems.push({title, url, visitTime, visitCount});
+		}
+	}
+
+	this.historyItems = historyItems;
+	this.length = historyItems.length;
 };
 
 Results.prototype.slice = function(firstResult, lastResult) {

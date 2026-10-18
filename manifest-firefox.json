@@ -1,7 +1,7 @@
 {
 	"manifest_version": 3,
 	"name": "History Helper",
-	"version": "1.4.0",
+	"version": "1.5.0",
 	"description": "A history viewer.",
 	"author": "J.C. Fields",
 	"homepage_url": "https://github.com/jcfieldsdev/history-helper",

@@ -61,6 +61,7 @@ Or you can select *Specific range...*, which enables the **Start date** and **En
 
 - Title
 - URL
+- First visited
 - Last visited
 - Visit count
 
@@ -76,17 +77,19 @@ A split bar appears in between the options and the results. It can be used to sh
 
 ### Results
 
-The results are displayed after searching if any have been found. Results are split into multiple pages if there are too many to show on a single page. The sort order (ascending or descending) and the number of results shown on each page can be adjusted.
+The results are displayed after searching if any have been found. Results are split into multiple pages if there are too many to show on a single page. The sort order (ascending or descending), the number of results shown on each page, and the grouping method (by page or by visit) can be adjusted.
 
 The title and URL may be truncated if they are too long to fit in the width of the display. Hovering over the title or URL with the cursor shows a tooltip containing the entire title or URL. Clicking the arrow icon next to a URL adds a search row that restricts searches to that host.
 
-Hovering over a search result shows an X that can be clicked to remove the item from the browser history. Hovering over the pagination bar shows an X that can be clicked to remove the entire page of results from the browser history.
+When results are grouped by page, the *Last visited* date may be outside of the selected search range if the page was visited within the search range and then visited again later. The *Visit count* shows the total number of visits to the page. When a page has been visited more than twice, a cross icon appears that shows all visits to the page when pressed. Clicking the clock icon next to a date sets the **Start date** and **End date** fields to that day.
 
-The *Last visited* date may be outside of the selected search range if the page was visited within the search range and then visited again later. When a page has been visited more than once, a cross icon appears that shows all visits to the page when pressed. Clicking the clock icon next to a date sets the **Start date** and **End date** fields to that day.
+When results are grouped by visit, each visit to a page is shown on a separate row with its date and time. The *Visit count* shows the visit number for that particular visit to that page.
+
+Hovering over a search result shows an X that can be clicked to remove all visits to that page from the browser history. The **Delete All** button below the results removes the entire page of results from the browser history.
 
 ## Acknowledgments
 
-Uses [navigation history vector](https://www.svgrepo.com/svg/36467/navigation-history-interface-symbol-of-a-clock-with-an-arrow) from [SVG Repo](https://www.svgrepo.com/).
+Uses [navigation history](https://www.svgrepo.com/svg/36467/navigation-history-interface-symbol-of-a-clock-with-an-arrow), [reset](https://www.svgrepo.com/svg/501336/reset), [error](https://www.svgrepo.com/svg/334640/error), [chevrons up](https://www.svgrepo.com/svg/507591/chevrons-up-alt), [sort amount up](https://www.svgrepo.com/svg/532213/sort-amount-up), [sort amount down](https://www.svgrepo.com/svg/532208/sort-amount-down), [globe](https://www.svgrepo.com/svg/532531/globe), and [calendar](https://www.svgrepo.com/svg/533381/calendar-alt) vectors from [SVG Repo](https://www.svgrepo.com/).
 
 ## Authors
 

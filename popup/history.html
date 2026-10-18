@@ -64,7 +64,7 @@
 		<button type="button" id="expand" class="layout" title="Expand the layout"><span>Expand</span></button>
 	</div>
 	<div id="midbar">
-		<div>
+		<div class="sortButtons">
 			<button type="button" value="0" id="sortDescending" class="sortOrder option" title="Sort results in descending order"><span>Sort Descending</span></button>
 			<button type="button" value="1" id="sortAscending" class="sortOrder option" title="Sort results in ascending order"><span>Sort Ascending</span></button>
 		</div>
@@ -80,7 +80,10 @@
 			</select> results per page.</div>
 			<button type="button" id="nextPage" class="page" title="Load next page of results"><span>Next</span></button>
 		</div>
-		<div><button type="button" id="showDeleteAll" class="show" value="deleteAllDialog" title="Remove every result on this page from the browser history"><span>Delete All</span></button></div>
+		<div class="groupButtons">
+			<button type="button" value="0" id="groupByPage" class="groupBy option" title="Group results by page"><span>Group by Page</span></button>
+			<button type="button" value="1" id="groupByVisit" class="groupBy option" title="Group results by visit"><span>Group by Visit</span></button>
+		</div>
 	</div>
 	<div id="results"></div>
 	<div id="noResults" class="message">
@@ -114,7 +117,7 @@
 		<div class="predicate"></div>
 	</template>
 	<template id="buttons">
-		<div class="buttons">
+		<div class="conditionButtons">
 			<button type="button" title="Remove this condition" class="remove">&minus;</button>
 			<button type="button" title="Add another condition" class="add">+</button>
 		</div>
@@ -157,7 +160,7 @@
 			<input type="number" value="0" class="value number">
 		</div>
 	</template>
-	<template id="result">
+	<template id="pageResult">
 		<div class="result">
 			<div class="title"></div>
 			<div class="url">
@@ -187,9 +190,7 @@
 					<td>
 						<span class="label">Visit count:</span>
 					</td>
-					<td>
-						<span class="visitCount"></span>
-					</td>
+					<td class="visitCount"></td>
 				</tr>
 				<tr class="visitRow">
 					<td>
@@ -202,10 +203,34 @@
 					</td>
 				</tr>
 			</table>
-			<div class="widgets"><button type="button" title="Remove this page from the browser history" class="delete"><span>Delete</span></button></div>
+			<div class="widgets">
+				<button type="button" title="Remove this page from the browser history" class="delete"><span>Delete</span></button>
+			</div>
 		</div>
 	</template>
-	<template id="visit">
+	<template id="visitResult">
+		<tr class="result">
+			<td class="title"></td>
+			<td class="url">
+				<button type="button" title="Add a search condition for this host" class="setHost"><span>Set</span></button>
+				<a class="link"></a>
+			</td>
+			<td class="visitTime">
+				<button type="button" title="Set the date range to this day" class="visit setDate"><span>Set</span></button>
+				<span class="visit dateTime"></span>
+			</td>
+			<td class="visitNumber"></td>
+			<td class="widgets">
+				<button type="button" title="Remove all visits to this page from the browser history" class="delete"><span>Delete</span></button>
+			</td>
+		</tr>
+	</template>
+	<template id="visitItem">
 		<li><button type="button" title="Set the date range to this day" class="setDate"><span>Set</span></button> <span class="dateTime"></span></li>
+	</template>
+	<template id="pageButtons">
+		<div id="endbar">
+			<button type="button" value="deleteAllDialog" id="showDeleteAll" class="show" title="Remove every result on this page from the browser history"><span>Delete All</span></button>
+		</div>
 	</template>
 </body></html>
